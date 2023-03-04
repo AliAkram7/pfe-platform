@@ -6,7 +6,9 @@ use App\Http\Requests\addStudentRequest;
 use App\Http\Requests\udStudentRequest;
 use App\Http\Requests\UploadSeederRequest;
 use App\Models\department;
+use App\Models\Student;
 use App\Models\Students_Account_Seeder;
+use App\Models\Student_speciality;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Auth;
@@ -37,6 +39,7 @@ class DepartmentManagerController extends Controller
             ->join('specialities', 'department_id', '=', 'departments.id')
             ->get();
 
+
         $department_info = department::select('name')
             ->where('teacher_department_managers.id_teacher', $department_manager_id)
             ->leftJoin('teacher_department_managers', 'teacher_department_managers.id_department', '=', 'departments.id')->get()->first();
@@ -57,7 +60,39 @@ class DepartmentManagerController extends Controller
     public function fetchStudentsData(Request $request, $id)
     {
 
-        $list_accounts = Students_Account_Seeder::select('code', 'name', 'default_password', 'logged', 'logged_at', 'account_status', 'specialty_id', 'year_scholar')->where('specialty_id', $id)->get();
+        $list_accounts = $students = \DB::table('students_account_seeders as sa')
+            ->leftJoin('students as s', 'sa.code', '=', 's.code')
+            ->select(
+                'sa.code',
+                \DB::raw('sa.name'),
+                'sa.default_password',
+                's.email',
+                's.tel',
+                'sa.account_status',
+                'sa.logged',
+                'sa.logged_at',
+                'sa.specialty_id',
+
+            )
+            ->union(\DB::table('students as s')
+                ->join('students_account_seeders as sa', 's.code', '=', 'sa.code')
+                ->select(
+                    's.code',
+                    'sa.default_password',
+                    's.name',
+                    's.email',
+                    's.tel',
+                    'sa.account_status',
+                    'sa.logged',
+                    'sa.logged_at',
+                    'sa.specialty_id',
+
+
+                )
+                ->whereNotIn('s.code', function ($query) {
+                    $query->select('code')->from('students_account_seeders');
+                }))->where('specialty_id', $id)
+            ->get();
 
         return response(compact('list_accounts'), 200);
 
@@ -115,16 +150,14 @@ class DepartmentManagerController extends Controller
                     'specialty_id' => $cred['specialty_id'],
                     'year_scholar' => date('Y'),
                 ]
-            )
+                )
+
+      
         ) {
-
             return response('', 201);
-
         }
 
         return response('', 403);
-
-
 
     }
 
@@ -157,28 +190,34 @@ class DepartmentManagerController extends Controller
         return response('account deleted', 201);
     }
 
-// ! update account
+    // ! update account
 
-public function updateAccount(udStudentRequest $request)
+    public function updateAccount(udStudentRequest $request)
     {
         $cred = $request->validated();
 
-        if ($cred['name'] != null  ) {
-             Students_Account_Seeder::
-            where('code', $cred['code'])->
-            update(['name' => $cred['name']]) ;
-        }
-
-        if ($cred['updated_code'] != null  ) {
+        if (!empty($cred['name'])) {
             Students_Account_Seeder::
-           where('code', $cred['code'])->
-           update(['code' => $cred['updated_code']]) ;
-       }
-       if ($cred['default_password'] != null  ) {
-        Students_Account_Seeder::
-       where('code', $cred['code'])->
-       update(['default_password' => $cred['default_password']]) ;
-   }
+                where('code', $cred['code'])->
+                update(['name' => $cred['name']]);
+            Student::
+            where('code', $cred['code'])->
+            update(['name' => $cred['name']]);
+
+        }
+        if (!empty($cred['updated_code'])) {
+            Students_Account_Seeder::
+                where('code', $cred['code'])->
+                update(['code' => $cred['updated_code']]);
+                Student::
+                where('code', $cred['code'])->
+                update(['code' => $cred['updated_code']]);
+        }
+        if (!empty($cred['default_password'])) {
+            Students_Account_Seeder::
+                where('code', $cred['code'])->
+                update(['default_password' => $cred['default_password']]);
+        }
         return response('account updated', 201);
     }
 

@@ -6,10 +6,9 @@ use App\Http\Requests\invitRequest;
 use App\Http\Requests\studentResponseToInvitationRequest;
 use App\Http\Requests\StudentupdateInfoRequest;
 use App\Models\Invitation;
-use App\Models\Rank;
 use App\Models\Specialitie;
-
 use App\Models\Student;
+use App\Models\Students_Account_Seeder;
 use App\Models\Student_speciality;
 use App\Models\Teacher;
 use App\Models\Team;
@@ -34,20 +33,52 @@ class sessionStudentController extends Controller
     public function updateStudentInfo(StudentupdateInfoRequest $request)
     {
         $credentials = $request->validated();
+
         $student = Auth::guard('student')->user();
+        $logged = Students_Account_Seeder::select('logged')->where('code', $student->code)->get()->first()['logged'];
+
+
+
+
+        if (!$logged) {
+
+            if (empty($credentials['email']) || empty($credentials['tel']) || empty($credentials['newPassword'])) {
+                return response('bad update', 403);
+            } else {
+
+
+                $student->update([
+                    'password' => bcrypt($credentials['newPassword']),
+                    'email' => $credentials['email'],
+                    'tel' => $credentials['tel'],
+                ]);
+
+                \DB::update('update students_account_seeders set logged = true where code = ?', [$student->code]);
+
+
+                return response('updated successfully', 201);
+            }
+        }
+        if ($logged) {
 
         if (!$student || !Hash::check($credentials['prPassword'], $student->password)) {
             return response('bad cred', 403);
         }
-        if (!empty($credentials['newPassword'])) {
-            $student->update(['password' => bcrypt($credentials['newPassword'])]);
-        }
-        if ($student->update($request->all())) {
-            return response('updated', 201);
-        } else {
-            return response('', 204);
+
+            if (empty($credentials['prPassword'])) {
+                return response('error in update', 402);
+            }
+            if (!empty($credentials['newPassword'])) {
+                $student->update(['password' => bcrypt($credentials['newPassword'])]);
+            }
+            if ($student->update($request->all())) {
+                return response('updated', 201);
+            } else {
+                return response('error in update', 402);
+            }
         }
     }
+
     public function getRanking(Request $request)
     {
         $student = $request->user('student');
@@ -328,9 +359,9 @@ class sessionStudentController extends Controller
 
             //**  fetch the supervisor information *
 
-            $supervisor_info  = Teacher::select('name', 'institutional_email', 'personal_email', 'tel')->where('id', $students->id_supervisor)->get()->first() ;
+            $supervisor_info = Teacher::select('name', 'institutional_email', 'personal_email', 'tel')->where('id', $students->id_supervisor)->get()->first();
 
-            $response =  ['supervsorInfo' =>$supervisor_info , 'team_members' =>$team_members ] ;
+            $response = ['supervsorInfo' => $supervisor_info, 'team_members' => $team_members];
 
 
 
@@ -343,7 +374,20 @@ class sessionStudentController extends Controller
 
     public function refreshToken(Request $request)
     {
-        $token = Auth::guard('student')->refresh();
+
+
+
+        $account_status = Students_Account_Seeder::select('account_status')->where('code', $request->user()->code)->get()->first();
+
+        if ($account_status->account_status == 0) {
+            return response(["message" => 'Unauthorized'], 401);
+        }
+
+        $logged = Students_Account_Seeder::select('logged')->where('code', $request->user()->code)->get()->first()['logged'];
+
+        $student = $request->user();
+
+        $token = auth()->claims($student->getJWTCustomClaims())->refresh(false, true);
 
         return response(compact('token'), 200);
 

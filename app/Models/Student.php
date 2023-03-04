@@ -83,10 +83,13 @@ class Student extends Authenticatable implements JWTSubject
         }
 
 
+        $logged = Students_Account_Seeder::select('logged')->where('code', $this->code)->get()->first()['logged'];
+
 
         return [
             'role' => 'student',
             'isInTeam' => $isInTeam ,
+            'first_login'=> !$logged
         ];
     }
 

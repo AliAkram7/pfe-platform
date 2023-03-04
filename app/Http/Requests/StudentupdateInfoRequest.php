@@ -27,7 +27,7 @@ class StudentupdateInfoRequest extends FormRequest
         return [
                 'email'=>"email|nullable",
                 'tel'=>"numeric|nullable",
-                "prPassword"=>"required",
+                "prPassword"=>"nullable",
                 "newPassword"=>"nullable",Password::min(8)->letters() ,
         ];
     }

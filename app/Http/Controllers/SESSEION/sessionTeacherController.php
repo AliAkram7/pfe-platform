@@ -39,6 +39,8 @@ class sessionTeacherController extends Controller
 }
 public function refreshToken(Request $request)
 {
+
+
     $token = Auth::guard('teacher')->refresh();
 
     return response(compact('token'), 200);

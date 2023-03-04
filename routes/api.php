@@ -66,27 +66,28 @@ Route::group(['middleware' => ['teacher.guard:teacher']], function () {
     Route::get('/teacher/getTeams', [TeamsController::class, 'getListOfTeams']);
 
     Route::get('/teacher/getRoomsByTeam/{id}', [TeamsController::class, 'getRoomsByTeam']);
+    
     Route::get('/teacher/getMessages/{id_room}', [TeamMessages::class, 'getMessages']);
 
     Route::post('/teacher/sendMessage', [TeamMessages::class, 'teacherSendMessage']);
 
     Route::post('/teacher/refreshToken', [sessionTeacherController::class, 'refreshToken']);
 
-    Route::get('/teacher/department_manager/get_department_info', [DepartmentManagerController::class, 'getDepartmentInfo']) ;
+    Route::get('/teacher/department_manager/get_department_info', [DepartmentManagerController::class, 'getDepartmentInfo']);
 
-    Route::post('/teacher/department_manager/upload', [DepartmentManagerController::class, 'upload']) ;
-// fetchStudentsData
-Route::get('/teacher/department_manager/fetchStudentsData/{id}', [DepartmentManagerController::class, 'fetchStudentsData']) ;
-// addStudent
-Route::post('/teacher/department_manager/addStudent', [DepartmentManagerController::class, 'addStudent']) ;
-// lockAccount
-Route::post('/teacher/department_manager/lockAccount', [DepartmentManagerController::class, 'lockAccount']) ;
-// unLockAccount
-Route::post('/teacher/department_manager/unLockAccount', [DepartmentManagerController::class, 'unLockAccount']) ;
-// deleteAccount
-Route::post('/teacher/department_manager/deleteAccount', [DepartmentManagerController::class, 'deleteAccount']) ;
-// updateAccount
-Route::post('/teacher/department_manager/updateAccount', [DepartmentManagerController::class, 'updateAccount']) ;
+    Route::post('/teacher/department_manager/upload', [DepartmentManagerController::class, 'upload']);
+
+    Route::get('/teacher/department_manager/fetchStudentsData/{id}', [DepartmentManagerController::class, 'fetchStudentsData']);
+
+    Route::post('/teacher/department_manager/addStudent', [DepartmentManagerController::class, 'addStudent']);
+
+    Route::post('/teacher/department_manager/lockAccount', [DepartmentManagerController::class, 'lockAccount']);
+
+    Route::post('/teacher/department_manager/unLockAccount', [DepartmentManagerController::class, 'unLockAccount']);
+
+    Route::post('/teacher/department_manager/deleteAccount', [DepartmentManagerController::class, 'deleteAccount']);
+
+    Route::post('/teacher/department_manager/updateAccount', [DepartmentManagerController::class, 'updateAccount']);
 
 });
 
