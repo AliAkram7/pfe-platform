@@ -56,8 +56,8 @@ class Teacher extends Authenticatable implements JWTSubject
     {
 
         // ! check if teacher is department manager #
-        // ! check if teacher is speciality manager
-        // ! check if teacher is presedents
+        // ! check if teacher is specialty manager
+        // ! check if teacher is president
         // ! check if teacher is doyen
 
         // *  check if teacher is  department manager #
@@ -65,12 +65,11 @@ class Teacher extends Authenticatable implements JWTSubject
         $teacherId = $this->id ;
 
         $isDepartmentManager = teacher_department_manager::select()->where('id_teacher', $teacherId)->count();
-
-
-
+        $isSpecialtyManager = Teacher_specialty_manager::select()->where('teacher_id', $teacherId)->count() ;
         return [
             'role' => 'teacher',
             'department_manager'=>$isDepartmentManager,
+            'specialty_manager'=>$isSpecialtyManager
         ];
     }
 

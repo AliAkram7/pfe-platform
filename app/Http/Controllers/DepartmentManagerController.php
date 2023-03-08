@@ -59,7 +59,8 @@ class DepartmentManagerController extends Controller
 
     public function fetchStudentsData(Request $request, $id)
     {
-
+        // TODO
+        
         $list_accounts = $students = \DB::table('students_account_seeders as sa')
             ->leftJoin('students as s', 'sa.code', '=', 's.code')
             ->select(
@@ -152,7 +153,7 @@ class DepartmentManagerController extends Controller
                 ]
                 )
 
-      
+
         ) {
             return response('', 201);
         }

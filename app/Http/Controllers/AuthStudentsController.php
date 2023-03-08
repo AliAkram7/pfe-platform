@@ -84,7 +84,7 @@ class AuthStudentsController extends Controller
                         ]
                     );
 
-    
+                    
                 Student_speciality::create(
                     [
                     'student_id'=>$user->id,

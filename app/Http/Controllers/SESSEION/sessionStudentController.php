@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\SESSEION;
 
+use App\Http\Requests\EmailVerificationRequest;
 use App\Http\Requests\invitRequest;
 use App\Http\Requests\studentResponseToInvitationRequest;
 use App\Http\Requests\StudentupdateInfoRequest;
@@ -12,6 +13,7 @@ use App\Models\Students_Account_Seeder;
 use App\Models\Student_speciality;
 use App\Models\Teacher;
 use App\Models\Team;
+use App\Notifications\EmailVerificationNotification;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -52,18 +54,18 @@ class sessionStudentController extends Controller
                     'email' => $credentials['email'],
                     'tel' => $credentials['tel'],
                 ]);
+                // $student->notify(new EmailVerificationNotification);
 
                 \DB::update('update students_account_seeders set logged = true where code = ?', [$student->code]);
-
 
                 return response('updated successfully', 201);
             }
         }
         if ($logged) {
 
-        if (!$student || !Hash::check($credentials['prPassword'], $student->password)) {
-            return response('bad cred', 403);
-        }
+            if (!$student || !Hash::check($credentials['prPassword'], $student->password)) {
+                return response('bad cred', 403);
+            }
 
             if (empty($credentials['prPassword'])) {
                 return response('error in update', 402);
@@ -113,23 +115,29 @@ class sessionStudentController extends Controller
     }
     public function invitePartner(invitRequest $request)
     {
+
+        $credentials = $request->validated() ;
+
         $sender = $request->user('student');
 
         if ($sender->code == $request['code']) {
             return response('', 403);
         }
 
-        $reciever = Student::get()->where('code', $request['code'])->first();
+        $receiver = Student::get()->where('code', $credentials['code'])->first();
 
-        // check that the sender and reciever are with the same speciality
+        // check that the sender and receiver are with the same speciality
 
         $this_year = date('Y');
-        $last_year = "" . $this_year - 1 . "";
-
+        $last_year = "" . $this_year - 1 ."";
         $year_scholar = "$last_year-$this_year";
 
-        $reciever_speciality = Student_speciality::get()->where('student_id', $reciever->id)->where('year_scholar', $year_scholar)->first()->speciality_id;
-        $sender_speciality = Student_speciality::get()->where('student_id', $sender->id)->where('year_scholar', $year_scholar)->first()->speciality_id;
+
+        // return response(compact('receiverId', 'senderId'),200)  ;
+        // // try {
+            $reciever_speciality = Student_speciality::get()->where('student_id', $receiver->id)->where('year_scholar', $year_scholar)->first()->speciality_id;
+            $sender_speciality = Student_speciality::get()->where('student_id', $sender->id)->where('year_scholar', $year_scholar)->first()->speciality_id;
+
 
         if ($reciever_speciality != $sender_speciality) {
             return response('hello 1', 403);
@@ -138,7 +146,7 @@ class sessionStudentController extends Controller
         // ! check that the inviter are alredy in team or alredy send the invitation
 
         $checkIfRecieverAreAlredyInTeam = \DB::table('invitations')
-            ->where('receiver_id', $reciever->id)
+            ->where('receiver_id', $receiver->id)
             ->where('isAccepted', 1)
             ->exists();
 
@@ -148,7 +156,7 @@ class sessionStudentController extends Controller
             ->exists();
 
         try {
-            $recieverId = $reciever->id;
+            $recieverId = $receiver->id;
 
             $students = Team::whereExists(function ($query) use ($recieverId) {
                 $query->select('id')
@@ -168,7 +176,7 @@ class sessionStudentController extends Controller
 
         $checkIfInvitationIsAlredyExist = \DB::table('invitations')
             ->where('sender_id', $sender->id)
-            ->where('receiver_id', $reciever->id)
+            ->where('receiver_id', $receiver->id)
             ->where('isAccepted', 0)
             ->exists();
 
@@ -179,7 +187,7 @@ class sessionStudentController extends Controller
 
         Invitation::create([
             'sender_id' => $sender->id,
-            'receiver_id' => $reciever->id,
+            'receiver_id' => $receiver->id,
             'isAccepted' => 0,
         ]);
 
@@ -194,6 +202,9 @@ class sessionStudentController extends Controller
             select('tel', 'email', 'name', 'code', 'invitations.created_at', 'isAccepted')
             ->join('students', 'students.id', '=', 'invitations.sender_id')
             ->where('receiver_id', $student->id)
+            ->where('isAccepted', 0 )
+            ->orWhere('isAccepted', 1)
+            ->where('code','!=', $student->code )
             ->groupBy('name', 'code', 'invitations.created_at', 'tel', 'email', 'isAccepted')
             ->get()
         ;
@@ -207,6 +218,7 @@ class sessionStudentController extends Controller
             select('tel', 'email', 'name', 'code', 'invitations.created_at', 'isAccepted')
             ->join('students', 'students.id', '=', 'invitations.receiver_id')
             ->where('sender_id', $student->id)
+            ->where('isAccepted', 0)
             ->groupBy('name', 'code', 'invitations.created_at', 'tel', 'email', 'isAccepted')
             ->get()
         ;
@@ -393,6 +405,27 @@ class sessionStudentController extends Controller
 
     }
 
+    public function checkEmailVerification(EmailVerificationRequest $request)
+    {
+
+        $user = $request->user();
+
+        // return $user->email ;
+
+        $otp = $this->otp->validate($user->email, $request->otp);
+        if (!($otp->status)) {
+            return response()->json([
+                'error' => $otp
+            ], 401);
+        }
+        $student = Students_Account_Seeder::where('code', $user->code)->first();
+        $student->update(['logged' => true]);
+        return response()->json([
+            'access_token' => JWTAuth::fromUser($student),
+        ], 200);
+
+
+    }
 
 
 

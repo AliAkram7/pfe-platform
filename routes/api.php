@@ -10,6 +10,7 @@ use App\Http\Controllers\SESSEION\TeamMessages;
 use App\Http\Controllers\SESSEION\TeamsController;
 
 
+use App\Http\Controllers\ThemeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -45,6 +46,8 @@ Route::group(['middleware' => 'student.guard:student'], function () {
     Route::post('/studentsendMessage', [TeamMessages::class, 'studentsendMessage']);
     Route::get('/student/getMessages/{id_room}', [TeamMessages::class, 'getMessages']);
     Route::post('/student/refreshToken', [sessionStudentController::class, 'refreshToken']);
+    Route::post('/student/checkEmailVerification', [sessionStudentController::class, 'checkEmailVerification']);
+
 });
 
 
@@ -66,7 +69,7 @@ Route::group(['middleware' => ['teacher.guard:teacher']], function () {
     Route::get('/teacher/getTeams', [TeamsController::class, 'getListOfTeams']);
 
     Route::get('/teacher/getRoomsByTeam/{id}', [TeamsController::class, 'getRoomsByTeam']);
-    
+
     Route::get('/teacher/getMessages/{id_room}', [TeamMessages::class, 'getMessages']);
 
     Route::post('/teacher/sendMessage', [TeamMessages::class, 'teacherSendMessage']);
@@ -88,6 +91,13 @@ Route::group(['middleware' => ['teacher.guard:teacher']], function () {
     Route::post('/teacher/department_manager/deleteAccount', [DepartmentManagerController::class, 'deleteAccount']);
 
     Route::post('/teacher/department_manager/updateAccount', [DepartmentManagerController::class, 'updateAccount']);
+
+    Route::post('/teacher/sendSuggestionTheme', [ThemeController::class, 'sendSuggestionTheme']);
+
+    Route::post('/teacher/PresidentValidity', [ThemeControllerr::class, 'PresidentValidity']);
+
+    Route::post('/teacher/SpecialtyManagerValidity', [ThemeController::class, 'SpecialtyManagerValidity']);
+
 
 });
 

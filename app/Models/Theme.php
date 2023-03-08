@@ -5,10 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Specialitie extends Model
+class Theme extends Model
 {
     use HasFactory;
 
+    protected $fillable  = [
+        'teacher_id' , 'specialty_id' , 'description', 'title' , 'president_validation'
+    ] ;
 
 
 }
