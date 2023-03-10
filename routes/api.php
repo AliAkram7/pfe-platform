@@ -10,6 +10,7 @@ use App\Http\Controllers\SESSEION\TeamMessages;
 use App\Http\Controllers\SESSEION\TeamsController;
 
 
+use App\Http\Controllers\SpecialtyManagerContoller;
 use App\Http\Controllers\ThemeController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +48,13 @@ Route::group(['middleware' => 'student.guard:student'], function () {
     Route::get('/student/getMessages/{id_room}', [TeamMessages::class, 'getMessages']);
     Route::post('/student/refreshToken', [sessionStudentController::class, 'refreshToken']);
     Route::post('/student/checkEmailVerification', [sessionStudentController::class, 'checkEmailVerification']);
+
+    Route::get('/student/fetchThemePublished', [ThemeController::class, 'fetchThemePublished']);
+
+// updateListOfThemeChooses
+Route::post('/student/updateListOfThemeChooses', [TeamsController::class, 'updateListOfThemeChooses']);
+
+
 
 });
 
@@ -96,8 +104,15 @@ Route::group(['middleware' => ['teacher.guard:teacher']], function () {
 
     Route::post('/teacher/PresidentValidity', [ThemeControllerr::class, 'PresidentValidity']);
 
-    Route::post('/teacher/SpecialtyManagerValidity', [ThemeController::class, 'SpecialtyManagerValidity']);
+    Route::post('/teacher/specialty_manager/SpecialtyManagerValidity', [ThemeController::class, 'SpecialtyManagerValidity']);
 
+    Route::get('/teacher/specialty_manager/fetchSpecialtyInfo', [SpecialtyManagerContoller::class, 'fetchSpecialtyInfo']);
+
+    Route::get('/teacher/specialty_manager/fetchSuggestedTheme', [ThemeController::class, 'fetchSuggestedTheme']);
+
+    // publishTheListOfThemes
+
+    Route::post('/teacher/specialty_manager/publishTheListOfThemes', [ThemeController::class, 'publishTheListOfThemes']);
 
 });
 

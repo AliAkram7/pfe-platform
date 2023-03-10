@@ -11,10 +11,10 @@ class Student_speciality extends Model
 
     protected $table = 'student_specialities';
     protected $fillable = [
-            'student_id',
-                'speciality_id',
-                'year_scholar'
-    ] ;
+        'student_id',
+        'speciality_id',
+        'year_scholar'
+    ];
 
 
 }

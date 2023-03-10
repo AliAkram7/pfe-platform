@@ -4,6 +4,7 @@ namespace App\Http\Controllers\SESSEION;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateRoomRequest;
+use App\Http\Requests\updateListOfThemeRequest;
 use App\Models\Student;
 use App\Models\Team;
 use App\Models\TeamRoom;
@@ -79,33 +80,60 @@ class TeamsController extends Controller
 
             foreach ($member_ids as $member_id) {
                 $student_info = Student::find($member_id);
-                $student_resouce_info =  $student_info   ;
+                $student_resouce_info = $student_info;
                 $team_info[] = $student_resouce_info;
             }
 
-            $teams_list[] = ['team_id' => $team->id ,   $team_info];
+            $teams_list[] = ['team_id' => $team->id, $team_info];
 
             $team_info = array();
         }
 
-        return  count($teams_list) >  0 ?  response(compact('teams_list'), 200)  :  response('',403) ;
+        return count($teams_list) > 0 ? response(compact('teams_list'), 200) : response('', 403);
 
     }
 
-// !! get all rooms of team for teacher
+    // !! get all rooms of team for teacher
 
-public function getRoomsByTeam(Request $request , $id )
-{
-    $fetch_rooms = TeamRoom::
-    select('team_rooms.id AS  id_room', 'name', 'team_rooms.created_at', 'room_name', 'team_rooms.discription')
-    ->join('students', 'students.id', '=', 'team_rooms.creater_id')
-    ->where('team_id', $id)
-    ->get();
+    public function getRoomsByTeam(Request $request, $id)
+    {
+        $fetch_rooms = TeamRoom::
+            select('team_rooms.id AS  id_room', 'name', 'team_rooms.created_at', 'room_name', 'team_rooms.discription')
+            ->join('students', 'students.id', '=', 'team_rooms.creater_id')
+            ->where('team_id', $id)
+            ->get();
 
 
-return    $fetch_rooms ;
+        return $fetch_rooms;
 
-}
+    }
+
+    public function updateListOfThemeChooses(updateListOfThemeRequest $request)
+    {
+
+        $credentials = $request->validated();
+        $student = $request->user();
+
+
+        $team = Team::whereJsonContains('team_member', $student->id)->first();
+
+
+        try {
+            \DB::update('update teams set themes_ids = ?  where id = ? ', [json_encode(($credentials['theme_list'])), $team->id]);
+            return response('updated successfully', 200);
+        } catch (\Throwable $th) {
+
+            return response('error happen', 500);
+
+        }
+
+
+
+
+    }
+
+
+
 
 
 }

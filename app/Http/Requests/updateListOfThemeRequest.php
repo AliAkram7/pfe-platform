@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SpecialtyManagerValidateRequest extends FormRequest
+class updateListOfThemeRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -13,6 +13,8 @@ class SpecialtyManagerValidateRequest extends FormRequest
      */
     public function authorize()
     {
+
+        // ! add condition to this request
         return true;
     }
 
@@ -24,8 +26,7 @@ class SpecialtyManagerValidateRequest extends FormRequest
     public function rules()
     {
         return [
-            'suggestion_id' => 'required|exists:themes,id' ,
-            'response' => 'required|numeric'
+            'theme_list' => 'required'
         ];
     }
 }

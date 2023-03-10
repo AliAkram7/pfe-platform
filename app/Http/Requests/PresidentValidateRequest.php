@@ -25,7 +25,7 @@ class PresidentValidateRequest extends FormRequest
     {
         return [
             'suggestion_id' => 'required|exists:themes,id' ,
-            'response1' => 'required|numeric'
+            'response' => 'required|numeric'
         ] ;
     }
 }
