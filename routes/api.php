@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthStudentsController;
 use App\Http\Controllers\AuthTeacherController;
 use App\Http\Controllers\authUser;
 use App\Http\Controllers\DepartmentManagerController;
+use App\Http\Controllers\RankConroller;
 use App\Http\Controllers\SESSEION\sessionStudentController;
 use App\Http\Controllers\SESSEION\sessionTeacherController;
 use App\Http\Controllers\SESSEION\TeamMessages;
@@ -51,8 +52,8 @@ Route::group(['middleware' => 'student.guard:student'], function () {
 
     Route::get('/student/fetchThemePublished', [ThemeController::class, 'fetchThemePublished']);
 
-// updateListOfThemeChooses
-Route::post('/student/updateListOfThemeChooses', [TeamsController::class, 'updateListOfThemeChooses']);
+    // updateListOfThemeChooses
+    Route::post('/student/updateListOfThemeChooses', [TeamsController::class, 'updateListOfThemeChooses']);
 
 
 
@@ -110,9 +111,19 @@ Route::group(['middleware' => ['teacher.guard:teacher']], function () {
 
     Route::get('/teacher/specialty_manager/fetchSuggestedTheme', [ThemeController::class, 'fetchSuggestedTheme']);
 
-    // publishTheListOfThemes
-
     Route::post('/teacher/specialty_manager/publishTheListOfThemes', [ThemeController::class, 'publishTheListOfThemes']);
+
+    Route::get('/teacher/specialty_manager/getRanking', [SpecialtyManagerContoller::class, 'getRanking']);
+
+    Route::get('/teacher/specialty_manager/getStudentWithoutRank', [RankConroller::class, 'getStudentWithoutRank']);
+
+    Route::post('/teacher/specialty_manager/addRankByStudent', [RankConroller::class, 'addRankByStudent']);
+
+    Route::post('/teacher/specialty_manager/uploadRanks', [RankConroller::class, 'uploadRanks']);
+
+    Route::post('/teacher/specialty_manager/deleteRank', [RankConroller::class, 'deleteRank']);
+
+    Route::post('/teacher/specialty_manager/updateRank', [RankConroller::class, 'updateRank']);
 
 });
 

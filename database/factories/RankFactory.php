@@ -15,7 +15,7 @@ class RankFactory extends Factory
     {
         return [
             // student_id 	specialty_id 	year_of_study 	ms1 	ms2 	mgc 	observation
-              'student_specialite_id' => $this->faker->unique()->numberBetween(1,100),
+              'student_specialite_id' => $this->faker->unique()->numberBetween(101,105),
             'ms1' => $this->faker->numberBetween(9,20) ,
             'ms2' => $this->faker->numberBetween(9,20) ,
             'mgc' => $this->faker->numberBetween(9,20) ,
