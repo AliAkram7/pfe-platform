@@ -24,13 +24,7 @@ class TeamsController extends Controller
 
         $studentId = $student->id;
 
-        $team_info = Team::whereExists(function ($query) use ($studentId) {
-            $query->select('id')
-                ->from('students')
-                ->whereRaw("JSON_CONTAINS(team_member, '$studentId')");
-        })->get()->first();
-
-
+        $team_info = Team::select('id', 'member_1','member_2', )->where('member_1', $studentId)->orWhere('member_2', $studentId)->get()->first();
 
         $fetch_rooms = TeamRoom::
             select('team_rooms.id AS  id_room', 'name', 'team_rooms.created_at', 'room_name', 'team_rooms.discription')
@@ -47,11 +41,8 @@ class TeamsController extends Controller
         $sender = $request->user();
         $senderId = $sender->id;
 
-        $team_info = Team::whereExists(function ($query) use ($senderId) {
-            $query->select('id')
-                ->from('students')
-                ->whereRaw("JSON_CONTAINS(team_member, '$senderId')");
-        })->get()->first();
+        $team_info = Team::select('id', 'member_1','member_2', )->where('member_1', $senderId)->orWhere('member_2', $senderId)->get()->first();
+
 
         TeamRoom::create([
             'team_id' => $team_info->id,
@@ -70,13 +61,13 @@ class TeamsController extends Controller
 
         $teacher_id = $request->user()->id;
 
-        $Teams = Team::select('team_member', 'id')->where('id_supervisor', $teacher_id)->get();
+        $Teams = Team::select('member_1','member_2',  'id')->where('supervisor_id', $teacher_id)->get();
 
         $teams_list = array();
         $team_info = array();
 
         foreach ($Teams as $team) {
-            $member_ids = json_decode($team['team_member']);
+            $member_ids =  [ $team->member_1  ,$team->member_2 ]  ;
 
             foreach ($member_ids as $member_id) {
                 $student_info = Student::find($member_id);
@@ -115,17 +106,17 @@ class TeamsController extends Controller
         $student = $request->user();
 
 
-        $team = Team::whereJsonContains('team_member', $student->id)->first();
+        $team = Team::where('member_1', $student->id)->orWhere('member_2', $student->id)->first();
 
 
-        try {
-            \DB::update('update teams set themes_ids = ?  where id = ? ', [json_encode(($credentials['theme_list'])), $team->id]);
+        // try {
+            \DB::update('update teams set choice_list = ?  where id = ? ', [json_encode(($credentials['theme_list'])), $team->id]);
             return response('updated successfully', 200);
-        } catch (\Throwable $th) {
+        // } catch (\Throwable $th) {
 
-            return response('error happen', 500);
+        //     return response('error happen', 500);
 
-        }
+        // }
 
 
 

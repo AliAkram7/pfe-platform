@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthStudentsController;
 use App\Http\Controllers\AuthTeacherController;
 use App\Http\Controllers\authUser;
 use App\Http\Controllers\DepartmentManagerController;
+use App\Http\Controllers\FramerController;
 use App\Http\Controllers\RankConroller;
 use App\Http\Controllers\SESSEION\sessionStudentController;
 use App\Http\Controllers\SESSEION\sessionTeacherController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\SESSEION\TeamsController;
 
 use App\Http\Controllers\SpecialtyManagerContoller;
 use App\Http\Controllers\ThemeController;
+use App\Models\Framer;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -57,6 +59,7 @@ Route::group(['middleware' => 'student.guard:student'], function () {
 
 
 
+
 });
 
 
@@ -73,6 +76,7 @@ Route::post('/teacher/login', [AuthTeacherController::class, 'login']);
 Route::group(['middleware' => ['teacher.guard:teacher']], function () {
 
     Route::get('/teacher/info', [sessionTeacherController::class, 'getTeacherInfo']);
+
     Route::post('/teacher/update/info', [sessionTeacherController::class, 'teacherUpdateInfo']);
 
     Route::get('/teacher/getTeams', [TeamsController::class, 'getListOfTeams']);
@@ -103,7 +107,7 @@ Route::group(['middleware' => ['teacher.guard:teacher']], function () {
 
     Route::post('/teacher/sendSuggestionTheme', [ThemeController::class, 'sendSuggestionTheme']);
 
-    Route::post('/teacher/PresidentValidity', [ThemeControllerr::class, 'PresidentValidity']);
+    Route::post('/teacher/PresidentValidity', [ThemeController::class, 'PresidentValidity']);
 
     Route::post('/teacher/specialty_manager/SpecialtyManagerValidity', [ThemeController::class, 'SpecialtyManagerValidity']);
 
@@ -124,6 +128,18 @@ Route::group(['middleware' => ['teacher.guard:teacher']], function () {
     Route::post('/teacher/specialty_manager/deleteRank', [RankConroller::class, 'deleteRank']);
 
     Route::post('/teacher/specialty_manager/updateRank', [RankConroller::class, 'updateRank']);
+
+    Route::get('/teacher/specialty_manager/fetchTeams', [SpecialtyManagerContoller::class, 'fetchTeams']);
+
+    Route::get('/teacher/specialty_manager/fetchFramerTeacher',[FramerController::class, 'fetchFramerTeacher']);
+
+    Route::post('/teacher/specialty_manager/addFramer',[FramerController::class, 'addFramer']);
+
+    Route::post('/teacher/specialty_manager/removeFarmer',[FramerController::class, 'removeFarmer']);
+
+    Route::get('/teacher/specialty_manager/getTeacherNotFramer',[FramerController::class, 'getTeacherNotFramer']);
+
+    Route::post('/teacher/specialty_manager/publishListOfFarmers',[FramerController::class, 'publishListOfFarmers']);
 
 });
 

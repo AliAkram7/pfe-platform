@@ -129,10 +129,11 @@ class DepartmentManagerController extends Controller
                 ]
                 )
 
-
         ) {
             return response('', 201);
         }
+
+
 
         return response('', 403);
 
@@ -163,7 +164,10 @@ class DepartmentManagerController extends Controller
     public function deleteAccount(udStudentRequest $request)
     {
         $cred = $request->validated();
-        $update = Students_Account_Seeder::where('code', $cred['code'])->delete();
+        Student::where('code', $cred['code'])->delete();
+        Students_Account_Seeder::
+        where('code', $cred['code'])->
+        update(['account_status' => 0 ,  'logged'=>0 ]);
         return response('account deleted', 201);
     }
 
@@ -181,14 +185,19 @@ class DepartmentManagerController extends Controller
             where('code', $cred['code'])->
             update(['name' => $cred['name']]);
 
+
+
         }
         if (!empty($cred['updated_code'])) {
             Students_Account_Seeder::
                 where('code', $cred['code'])->
                 update(['code' => $cred['updated_code']]);
+
+
                 Student::
                 where('code', $cred['code'])->
                 update(['code' => $cred['updated_code']]);
+
         }
         if (!empty($cred['default_password'])) {
             Students_Account_Seeder::

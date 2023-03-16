@@ -27,7 +27,7 @@ class udStudentRequest extends FormRequest
             'code' =>'numeric|required',
             'updated_code'=>'numeric|min:8|unique:students_account_seeders,code',
             'name'=>'string',
-            'default_password'=>'string|min:8', Password::min(8)->letters()->numbers()->mixedCase()
+            'default_password'=> Password::min(8)->letters()->numbers()->mixedCase()
         ];
     }
 }

@@ -90,24 +90,22 @@ class sessionStudentController extends Controller
         $get_Speciality_name = Specialitie::get()->where('id', $getStudent_speciality_id)->first()->fullname;
 
         $this_year = date('Y');
-        $last_year = " " . $this_year - 1 . "";
 
-        $year_scholar = "$last_year-$this_year";
 
-        $studentRanks = Student::
-            select('students.code', 'students.name AS student_name', 'ranks.ms1', 'ranks.ms2', 'ranks.mgc', 'observation')
-            ->join('student_specialities', 'students.id', '=', 'student_specialities.student_id')
+        $studentRanks = Students_Account_Seeder::
+            select('students_account_seeders.code', 'students_account_seeders.name AS student_name', 'ranks.ms1', 'ranks.ms2', 'ranks.mgc', 'observation')
+            ->join('student_specialities', 'students_account_seeders.id', '=', 'student_specialities.student_id')
             ->join('specialities', 'student_specialities.speciality_id', '=', 'specialities.id')
             ->join('ranks', 'student_specialities.id', '=', 'ranks.student_specialite_id')
-            ->where('year_scholar', $year_scholar)
+            ->where('students_account_seeders.year_scholar', $this_year)
             ->where('student_specialities.speciality_id', $getStudent_speciality_id)
-            ->groupBy('specialities.id', 'students.id', 'students.name', 'ranks.ms1', 'ranks.ms2', 'ranks.mgc', 'specialities.fullname', 'year_scholar', 'observation', 'students.code')
+            ->groupBy('specialities.id', 'students_account_seeders.id', 'students_account_seeders.name', 'ranks.ms1', 'ranks.ms2', 'ranks.mgc', 'specialities.fullname', 'students_account_seeders.year_scholar', 'observation', 'students_account_seeders.code')
             ->orderBy('ranks.mgc', 'desc')
             ->get();
 
         $response = [
             'speciality_name' => $get_Speciality_name,
-            'year_scholar' => $year_scholar,
+            'year_scholar' => $this_year,
             'student_rank' => $studentRanks,
         ];
 
@@ -129,14 +127,14 @@ class sessionStudentController extends Controller
         // check that the sender and receiver are with the same speciality
 
         $this_year = date('Y');
-        $last_year = "" . $this_year - 1 ."";
-        $year_scholar = "$last_year-$this_year";
+        // $last_year = "" . $this_year - 1 ."";
+        // $year_scholar = "$last_year-$this_year";
 
 
         // return response(compact('receiverId', 'senderId'),200)  ;
         // // try {
-            $reciever_speciality = Student_speciality::get()->where('student_id', $receiver->id)->where('year_scholar', $year_scholar)->first()->speciality_id;
-            $sender_speciality = Student_speciality::get()->where('student_id', $sender->id)->where('year_scholar', $year_scholar)->first()->speciality_id;
+            $reciever_speciality = Student_speciality::get()->where('student_id', $receiver->id)->where('year_scholar', $this_year)->first()->speciality_id;
+            $sender_speciality = Student_speciality::get()->where('student_id', $sender->id)->where('year_scholar', $this_year)->first()->speciality_id;
 
 
         if ($reciever_speciality != $sender_speciality) {
@@ -155,16 +153,17 @@ class sessionStudentController extends Controller
             ->where('isAccepted', 1)
             ->exists();
 
-        try {
-            $recieverId = $receiver->id;
+        try { // !! check if the students is already in team
+            $receiverId = $receiver->id;
 
-            $students = Team::whereExists(function ($query) use ($recieverId) {
-                $query->select('id')
-                    ->from('students')
-                    ->whereRaw("JSON_CONTAINS(team_member, '$recieverId')");
-            })->get()->first();
 
-            $students_ids = json_decode($students->team_member);
+
+            $students = Team::select('member_1', 'member_2')
+            ->where('member_1', $receiverId)
+            ->orWhere('member_2', $receiverId)->get()->first() ;
+
+            $students_ids = [ $students->member_1  ,$students->member_2 ]  ;
+
 
             if (count($students_ids) > 0) {
                 $checkIfRecieverAreAlredyInTeam = true;
@@ -272,16 +271,14 @@ class sessionStudentController extends Controller
             ]);
 
             // * create team
-            $team_members = array($receiver_id, $sender_id);
-            $team_members_json = json_encode($team_members);
 
             Team::create([
-                'team_member' => $team_members_json,
-                'id_supervisor' => null,
+                'member_1' => $sender_id,
+                'member_2' => $receiver_id,
             ]);
 
             return response('accepted', 201);
-            // !----------------------------------------------------------------------------------------------------------------------------
+            // !-------------------------------------------------------------------------------------------------------------------------------------------------------------
 // * check if reciver refuse  the invitation
 
         } else if ($request['actionValue'] == -1) {
@@ -354,13 +351,18 @@ class sessionStudentController extends Controller
         $studentId = $student->id;
         try {
 
-            $students = Team::whereExists(function ($query) use ($studentId) {
-                $query->select('id')
-                    ->from('students')
-                    ->whereRaw("JSON_CONTAINS(team_member, '$studentId')");
-            })->get()->first();
+            // $students = Team::whereExists(function ($query) use ($studentId) {
+            //     $query->select('id')
+            //         ->from('students')
+            //         ->whereRaw("JSON_CONTAINS(team_member, '$studentId')");
+            // })->get()->first();
 
-            $students_ids = json_decode($students->team_member);
+            $students = Team::select('member_1', 'member_2', 'supervisor_id')
+            ->where('member_1', $studentId)
+            ->orWhere('member_2', $studentId)->get()->first() ;
+
+            $students_ids = [ $students->member_1  ,$students->member_2 ]  ;
+
 
             $team_members = array();
 
@@ -371,7 +373,8 @@ class sessionStudentController extends Controller
 
             //**  fetch the supervisor information *
 
-            $supervisor_info = Teacher::select('name', 'institutional_email', 'personal_email', 'tel')->where('id', $students->id_supervisor)->get()->first();
+
+            $supervisor_info = Teacher::select('name', 'institutional_email', 'personal_email', 'tel')->where('id', $students->supervisor_id)->get()->first();
 
             $response = ['supervsorInfo' => $supervisor_info, 'team_members' => $team_members];
 

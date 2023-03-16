@@ -24,7 +24,7 @@ class studentLoginRequest extends FormRequest
     public function rules()
     {
         return [
-                'code'=>'min:8|numeric',
+                'code'=>'min:8|numeric|exists:students_account_seeders,code',
                 'password'=>'required|min:8'
         ];
     }

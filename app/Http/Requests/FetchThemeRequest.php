@@ -15,13 +15,13 @@ class FetchThemeRequest extends FormRequest
      */
     public function authorize(Request $request)
     {
-        //  !! get students specialty
-        $student = $request->user() ;
-        $specialty_id = Student_speciality::select()->where('student_id', $student->id)->get()->first()->speciality_id ;
+        // //  !! get students specialty
+        // $student = $request->user() ;
+        // $specialty_id = Student_speciality::select()->where('student_id', $student->id)->get()->first()->speciality_id ;
 
-        $check = env("SPECIALTY_".$specialty_id."_PUBLISH_THEME") == true ;
+        // $check = env("SPECIALTY_".$specialty_id."_PUBLISH_THEME") == true;
 
-        return $check;
+        return true;
     }
 
     /**

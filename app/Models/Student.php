@@ -23,6 +23,7 @@ class Student extends Authenticatable implements JWTSubject
      * @var array
      */
     protected $fillable = [
+        'id',
         'name',
         'email',
         'password',
@@ -62,21 +63,20 @@ class Student extends Authenticatable implements JWTSubject
 
 
         //* get partner information
-        //  ! retrive members ids from Team
+        //  ! retrieve members ids from Team
 
         $studentId = $this->id;
         try {
 
-            $students = Team::whereExists(function ($query) use ($studentId) {
-                $query->select('id')
-                    ->from('students')
-                    ->whereRaw("JSON_CONTAINS(team_member, '$studentId')");
-            })->get()->first();
-
-            $students_ids = json_decode($students->team_member);
-
-            if (count($students_ids)  == 2) {
-                $isInTeam = true;
+            $isInTeam = false;
+            if (
+                $checkIfStudentISInTeam = Team::select('*')
+                    ->where('member_1', $studentId)
+                    ->orWhere('member_2', $studentId)->get()
+            ) {
+                if (count($checkIfStudentISInTeam) == 1) {
+                    $isInTeam = true;
+                }
             }
         } catch (\ErrorException $th) {
             $isInTeam = false;
@@ -85,11 +85,15 @@ class Student extends Authenticatable implements JWTSubject
 
         $logged = Students_Account_Seeder::select('logged')->where('code', $this->code)->get()->first()['logged'];
 
+        $specialty_id = Student_speciality::select('*')->where('student_id', $this->id)->get()->first()->speciality_id;
+        $method_of_aff = Affectation_method::select('method')->where('specialty_id', $specialty_id)->get()->first()->method;
+
 
         return [
             'role' => 'student',
-            'isInTeam' => $isInTeam ,
-            'first_login'=> !$logged
+            'isInTeam' => $isInTeam,
+            'first_login' => !$logged,
+            'aff_method' =>$method_of_aff ,
         ];
     }
 

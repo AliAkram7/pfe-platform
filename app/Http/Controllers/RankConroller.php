@@ -24,14 +24,14 @@ class RankConroller extends Controller
 
 
         try {
-            $student_without_rank = \DB::table('students')
+            $student_without_rank = \DB::table('students_account_seeders')
                 ->select(
                     // \DB::raw("CONCAT('student: ',name, ' with code : ', code) AS value"),
                     'code AS value',
                     \DB::raw("CONCAT('student: ',name, ' with code : ', code) AS label"),
                     'code AS description'
                 )
-                ->join('student_specialities', 'students.id', '=', 'student_specialities.student_id')
+                ->join('student_specialities', 'students_account_seeders.id', '=', 'student_specialities.student_id')
                 ->leftJoin('ranks', function ($join) {
                     $join->on('student_specialities.id', '=', 'ranks.student_specialite_id');
                 })
@@ -62,7 +62,7 @@ class RankConroller extends Controller
         // ! use me later
         $student_speciality_id = Student_speciality::select('student_specialities.id')
             ->leftJoin('specialities', 'specialities.id', '=', 'student_specialities.speciality_id')
-            ->leftJoin('students', 'students.id', '=', 'student_specialities.student_id')
+            ->leftJoin('students_account_seeders', 'students_account_seeders.id', '=', 'student_specialities.student_id')
             ->where('code', $credentials['code'])
             ->get()->first()->id;
 
@@ -96,7 +96,7 @@ class RankConroller extends Controller
             if (
                 $student_speciality_id = Student_speciality::select('student_specialities.id')
                     ->leftJoin('specialities', 'specialities.id', '=', 'student_specialities.speciality_id')
-                    ->leftJoin('students', 'students.id', '=', 'student_specialities.student_id')
+                    ->leftJoin('students_account_seeders', 'students_account_seeders.id', '=', 'student_specialities.student_id')
                     ->where('code', $worksheet->getCell('A' . $row)->getValue())
                     ->get()->first()
             ) {
@@ -127,7 +127,7 @@ class RankConroller extends Controller
         if (
             $student_speciality_id = Student_speciality::select('student_specialities.id')
                 ->leftJoin('specialities', 'specialities.id', '=', 'student_specialities.speciality_id')
-                ->leftJoin('students', 'students.id', '=', 'student_specialities.student_id')
+                ->leftJoin('students_account_seeders', 'students_account_seeders.id', '=', 'student_specialities.student_id')
                 ->where('code', $credentials['code'])
                 ->get()->first()
         ) {
@@ -144,7 +144,7 @@ class RankConroller extends Controller
         if (
             !$student_speciality_id = Student_speciality::select('student_specialities.id')
                 ->leftJoin('specialities', 'specialities.id', '=', 'student_specialities.speciality_id')
-                ->leftJoin('students', 'students.id', '=', 'student_specialities.student_id')
+                ->leftJoin('students_account_seeders', 'students_account_seeders.id', '=', 'student_specialities.student_id')
                 ->where('code', $credentials['code'])
                 ->get()->first()
         ) {

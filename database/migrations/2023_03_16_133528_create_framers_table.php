@@ -3,9 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Validation\Rules\Unique;
 
-class CreateStudentsTable extends Migration
+class CreateFramersTable extends Migration
 {
     /**
      * Run the migrations.
@@ -14,15 +13,12 @@ class CreateStudentsTable extends Migration
      */
     public function up()
     {
-        Schema::create('students', function (Blueprint $table) {
+        Schema::create('framers', function (Blueprint $table) {
             $table->id();
-            $table->string("code");
-            $table->string('name');
-            $table->string('email')->unique()->nullable();
-            $table->string('password');
-            $table->string('tel')->nullable();
+            $table->unsignedBigInteger('teacher_id') ;
+            $table->unsignedBigInteger('specialty_id') ;
+            $table->decimal('number_team_accepted');
             $table->timestamps();
-            
         });
     }
 
@@ -33,6 +29,6 @@ class CreateStudentsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('students');
+        Schema::dropIfExists('framers');
     }
 }

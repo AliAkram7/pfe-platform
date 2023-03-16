@@ -37,9 +37,9 @@ class Teacher extends Authenticatable implements JWTSubject
     ];
 
 
-    // public function teams()
+    // public function grades()
     // {
-    //     return $this->belongsToMany(Team::class);
+    //     return $this->belongsToMany(grade::class);
     // }
 
     public function getJWTIdentifier()
@@ -66,10 +66,22 @@ class Teacher extends Authenticatable implements JWTSubject
 
         $isDepartmentManager = teacher_department_manager::select()->where('id_teacher', $teacherId)->count();
         $isSpecialtyManager = Teacher_specialty_manager::select()->where('teacher_id', $teacherId)->count() ;
+        $pfe_method = 0  ;
+        if ($isSpecialtyManager) {
+            $specialty_managed = Teacher_specialty_manager::select('specialty_id')->where('teacher_id', $teacherId)->get()->first() ;
+
+            if ($affectation_method = Affectation_method::select('method')->where('specialty_id',$specialty_managed->specialty_id )->first() ) {
+                $pfe_method = $affectation_method->method ;
+            }
+        }
+
+
+
         return [
             'role' => 'teacher',
             'department_manager'=>$isDepartmentManager,
-            'specialty_manager'=>$isSpecialtyManager
+            'specialty_manager'=>$isSpecialtyManager ,
+            'pfe_method' =>$pfe_method ,
         ];
     }
 

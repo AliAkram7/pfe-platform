@@ -15,6 +15,7 @@ class StudentFactory extends Factory
     {
         // * 	code 	name 	email 	tel 	password
         return [
+            'id' =>  $this->faker->unique()->numberBetween(426,525),
             'code' => $this->faker->randomNumber(8,true),
             'name'=>$this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),

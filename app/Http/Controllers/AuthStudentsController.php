@@ -64,8 +64,7 @@ class AuthStudentsController extends Controller
 
         $credentials = $request->only(['code', 'password']);
 
-
-        $account_status = Students_Account_Seeder::select('logged')->where('code', $credentials['code'])->get()->first();
+        if ($account_status = Students_Account_Seeder::select('logged')->where('code', $credentials['code'])->get()->first()) {
 
 
         if ($account_status->logged == 0) {
@@ -75,7 +74,7 @@ class AuthStudentsController extends Controller
                 $studentInformation = Students_Account_Seeder::select('*')->where('code', $credentials['code'])->get()->first();
                 try {
                     $user = Student::create(
-                        [
+                        [   'id' => $studentInformation['id'] ,
                             'code' => $studentInformation['code'],
                             'name' => $studentInformation['name'],
                             'email' => null,
@@ -84,7 +83,7 @@ class AuthStudentsController extends Controller
                         ]
                     );
 
-                    
+
                 Student_speciality::create(
                     [
                     'student_id'=>$user->id,
@@ -95,7 +94,7 @@ class AuthStudentsController extends Controller
 
                     $token = Auth::guard('student')->attempt($credentials);
                     if (!$token) {
-                        return response(['message' => 'bad cred2'], 401);
+                        return response(['message' => 'Unauthorized'], 401);
                     }
                     $user = Auth::guard('student')->user();
                     $account_status = Students_Account_Seeder::select('account_status')->where('code', $user->code)->get()->first();
@@ -106,13 +105,12 @@ class AuthStudentsController extends Controller
                     return response(compact('user', 'token', 'role'));
 
 
-
                 } catch (\Illuminate\Database\QueryException $th) {
 
-
                     $token = Auth::guard('student')->attempt($credentials);
+
                     if (!$token) {
-                        return response(['message' => 'bad cred'], 401);
+                        return response(['message' => 'password or code is incorrect1'], 401);
                     }
                     $user = Auth::guard('student')->user();
                     $account_status = Students_Account_Seeder::select('account_status')->where('code', $user->code)->get()->first();
@@ -126,12 +124,15 @@ class AuthStudentsController extends Controller
 
 
             } else {
-                return response(['message' => 'bad cred'], 401);
+                return response(['message' => 'unauthorized'], 401);
             }
-        } else {
+        }
+        else {
+
             $token = Auth::guard('student')->attempt($credentials);
+
             if (!$token) {
-                return response(['message' => 'bad cred'], 401);
+                return response(['message' => 'password or code is incorrect3'], 401);
             }
             $user = Auth::guard('student')->user();
             $account_status = Students_Account_Seeder::select('account_status')->where('code', $user->code)->get()->first();
@@ -141,6 +142,7 @@ class AuthStudentsController extends Controller
             $role = 'student';
             return response(compact('user', 'token', 'role'));
         }
+    }
 
     }
 

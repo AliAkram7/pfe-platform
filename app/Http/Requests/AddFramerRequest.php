@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class deleteRankRequest extends FormRequest
+class AddFramerRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,7 +24,8 @@ class deleteRankRequest extends FormRequest
     public function rules()
     {
         return [
-            'code' => 'numeric|exists:students_account_seeders,code'
+                'code' =>'required' ,
+                'numberOfAcceptedTeam'  => 'required|min:0|max:1'
         ];
     }
 }

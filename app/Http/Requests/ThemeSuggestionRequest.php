@@ -24,9 +24,13 @@ class ThemeSuggestionRequest extends FormRequest
     public function rules()
     {
         return [
-            'themeTitle' => 'required|min:4' ,
-            'themeDesc' => 'nullable',
-            'specialty_name' => 'required'
+            'title' => 'string|required',
+            'specialty' => 'string|required',
+            'searchDomain' => 'required|string' ,
+            'description' => 'required|string' ,
+            'objectives' =>'required|string' ,
+            'keyWords' => 'array',
+            'workPlan' => 'array'
         ];
     }
 }
