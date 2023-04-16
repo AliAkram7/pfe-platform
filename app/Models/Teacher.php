@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
-
 class Teacher extends Authenticatable implements JWTSubject
 {
     use HasApiTokens, HasFactory, Notifiable;
@@ -20,6 +19,9 @@ class Teacher extends Authenticatable implements JWTSubject
      * @var array
      */
     protected $fillable = [
+        'id',
+        'name',
+        'code',
         'institutional_email',
         'personal_email',
         'grade_id',
@@ -75,10 +77,12 @@ class Teacher extends Authenticatable implements JWTSubject
             }
         }
 
+        $logged = Teacher_account_seeders::select('logged')->where('code', $this->code)->get()->first()['logged'];
 
 
         return [
             'role' => 'teacher',
+            'first_login' => !$logged,
             'department_manager'=>$isDepartmentManager,
             'specialty_manager'=>$isSpecialtyManager ,
             'pfe_method' =>$pfe_method ,

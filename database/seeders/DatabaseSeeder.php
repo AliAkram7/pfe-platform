@@ -19,7 +19,8 @@ class DatabaseSeeder extends Seeder
         // \App\Models\Students_Account_Seeder::factory(25)->create() ;
         // \App\Models\Student::factory(100)->create();
         // \App\Models\Theme::factory(100)->create() ;
-        \App\Models\Framer::factory(12)->create() ;
+        // \App\Models\Framer::factory(12)->create() ;
+        \App\Models\Teacher_account_seeders::factory(12)->create() ;
         // \App\Models\Student_speciality::factory(100)->create();
         // \App\Models\Teacher::factory(10)->create();
     }

@@ -18,7 +18,6 @@ class Theme extends Model
         'research_domain',
         'objectives_of_the_project',
         'work_plan',
-        'teacher_id',
         'specialty_manager_validation',
     ];
 

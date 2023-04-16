@@ -24,7 +24,8 @@ class TeacherLoginRequest extends FormRequest
     public function rules()
     {
         return [
-            'code' => 'required|numeric|exists:teachers,code|min:8',
+            'code' => 'exists:teacher_account_seeders,code|min:8|nullable',
+            'institutional_email'=>'email|nullable|exists:teacher_account_seeders,institutional_email' ,
             'password' =>'required|min:8'
         ];
     }

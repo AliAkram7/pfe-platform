@@ -22,9 +22,9 @@ class DepartmentManagerController extends Controller
 
     public function getDepartmentInfo(Request $request)
     {
-        if (JWTAuth::parseToken()->getPayload()['department_manager'] == 0) {
-            return response('not allowed', 403);
-        }
+        // if (JWTAuth::parseToken()->getPayload()['department_manager'] == 0) {
+        //     return response('not allowed', 403);
+        // }
         $department_manager_id = $request->user('teacher')->id;
         $speciality_info = department::select('specialities.id', 'specialities.fullname', 'specialities.abbreviated_name')
             ->where('teacher_department_managers.id_teacher', $department_manager_id)
@@ -46,7 +46,7 @@ class DepartmentManagerController extends Controller
 
     public function fetchStudentsData(Request $request, $id)
     {
-        // TODO
+
         $list_accounts = $students = \DB::table('students_account_seeders as sa')
             ->leftJoin('students as s', 'sa.code', '=', 's.code')
             ->select(
@@ -165,11 +165,21 @@ class DepartmentManagerController extends Controller
     {
         $cred = $request->validated();
         Student::where('code', $cred['code'])->delete();
-        Students_Account_Seeder::
-        where('code', $cred['code'])->
-        update(['account_status' => 0 ,  'logged'=>0 ]);
+        Students_Account_Seeder::where('code', $cred['code'])->delete();
         return response('account deleted', 201);
     }
+
+// ! reset account
+public function resetStudentAccount(udStudentRequest $request)
+{
+    $cred = $request->validated();
+    Student::where('code', $cred['code'])->delete();
+    Students_Account_Seeder::
+    where('code', $cred['code'])->
+    update(['account_status' => 0 ,  'logged'=>0 ]);
+    return response('account deleted', 201);
+}
+
 
     // ! update account
 

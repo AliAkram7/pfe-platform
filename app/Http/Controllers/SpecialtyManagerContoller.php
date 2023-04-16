@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\getAppointmentsDatesRequest;
 use App\Models\Affectation_method;
+use App\Models\Follow_teams;
 use App\Models\Specialitie;
 use App\Models\Student;
 use App\Models\Students_Account_Seeder;
 use App\Models\Teacher;
 use App\Models\Teacher_specialty_manager;
+use App\Models\Team_appointment;
 use App\Models\Theme;
 use App\Models\Team;
 use Illuminate\Http\Request;
@@ -72,7 +75,7 @@ class SpecialtyManagerContoller extends Controller
         $specialty_id = Teacher_specialty_manager::get()->where('teacher_id', $teacher->id)->first()->specialty_id;
 
         $teams = \DB::table('teams')
-            ->join('students as s', function ($join) {
+            ->join('students_account_seeders as s', function ($join) {
                 $join->on('teams.member_1', '=', 's.id')
                     ->orWhere('teams.member_2', '=', 's.id');
             })
@@ -87,11 +90,10 @@ class SpecialtyManagerContoller extends Controller
                 'choice_list',
                 'team_rank',
                 'theme_id',
-            // '*'
             )
             ->get();
 
-            // return $teams ;
+        // return $teams ;
         $response = [];
         // get students snd supervisor of team information
         foreach ($teams as $team) {
@@ -115,35 +117,39 @@ class SpecialtyManagerContoller extends Controller
 
             $list_theme = [];
             // !! if method of affectation is one
-            $method_of_aff = Affectation_method::select('method')->where('specialty_id',$specialty_id)->get()->first()->method ;
-            if ($method_of_aff == 2 ) {
+            $method_of_aff = Affectation_method::select('method')->where('specialty_id', $specialty_id)->get()->first()->method;
+            if ($method_of_aff == 2) {
                 foreach ($array_of_themes_ids as $theme_id) {
                     $list_theme[] = Teacher::select('name as title')->where('id', $theme_id)->first();
                 }
-            }else{
+            } else {
                 foreach ($array_of_themes_ids as $theme_id) {
                     $list_theme[] = Theme::select('title')->where('id', $theme_id)->first();
                 }
-        }
+            }
 
 
+            // * fetch period of team
 
-
-            $theme  = Theme::select('id', 'title', 'description')->where('id', $team->theme_id)->first();
-
+            $periods = Follow_teams::select('periods.id AS p_id', 'num_period', 'start_date', 'end_date')
+                ->leftJoin('periods', 'periods.id', '=', 'follow_teams.period_id')
+                ->where('team_id', $team->id)
+                ->get()
+            ;
+            $theme = Theme::select('id', 'title', 'description', 'created_at AS send_at')->where('id', $team->theme_id)->first();
             $response[] = [
+                'team_id' => $team->id,
                 'supervisor_info' => $supervisor_info,
                 'member_1' => $member_1_info,
                 'member_2' => $member_2_info,
-                'list_theme' => $list_theme  ,
-                "theme_workOn"  => $theme ,
+                'list_theme' => $list_theme,
+                "theme_workOn" => $theme,
+                'periods' => $periods,
             ];
         }
-
         return $response;
-
     }
 
-
+ 
 
 }

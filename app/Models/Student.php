@@ -41,6 +41,7 @@ class Student extends Authenticatable implements JWTSubject
     ];
 
 
+
     public function teams()
     {
         return $this->belongsToMany(Team::class);
@@ -91,8 +92,8 @@ class Student extends Authenticatable implements JWTSubject
 
         return [
             'role' => 'student',
-            'isInTeam' => $isInTeam,
             'first_login' => !$logged,
+            'isInTeam' => $isInTeam,
             'aff_method' =>$method_of_aff ,
         ];
     }

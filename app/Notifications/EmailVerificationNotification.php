@@ -22,8 +22,8 @@ class EmailVerificationNotification extends Notification
      */
     public function __construct()
     {
-        $this->message = "Cilck the link below: ";
-        $this->subject = 'Verivication needed';
+
+        $this->subject = 'Verification needed';
         $this->fromEmail = 'Akrem@gmail.com';
         $this->mailer = 'smtp';
         $this->otp = new Otp;
@@ -47,7 +47,7 @@ class EmailVerificationNotification extends Notification
         return (new MailMessage)
         ->mailer($this->mailer )
         ->subject($this->subject)
-        ->greeting('Hello' . $firstName)
+        ->greeting('hello ' . $firstName)
         ->line($this->message)
         ->line('code: ' . $otp->token);
     }
@@ -56,7 +56,7 @@ class EmailVerificationNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            
+
         ];
     }
 }

@@ -66,5 +66,6 @@ class Kernel extends HttpKernel
         'auth.gaurd' => \App\Http\Middleware\assiGaurd::class,
         'teacher.guard' => \App\Http\Middleware\TeacherMiddleware::class,
         'student.guard' => \App\Http\Middleware\StudentMiddleware::class,
+        'admin.guard'=> \App\Http\Middleware\AdminMiddleware::class,
     ];
 }

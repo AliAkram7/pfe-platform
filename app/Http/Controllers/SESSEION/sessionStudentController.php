@@ -13,6 +13,8 @@ use App\Models\Students_Account_Seeder;
 use App\Models\Student_speciality;
 use App\Models\Teacher;
 use App\Models\Team;
+use App\Models\TeamRoom;
+use App\Models\Theme;
 use App\Notifications\EmailVerificationNotification;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -54,7 +56,11 @@ class sessionStudentController extends Controller
                     'email' => $credentials['email'],
                     'tel' => $credentials['tel'],
                 ]);
-                // $student->notify(new EmailVerificationNotification);
+
+
+                $student->notify(new EmailVerificationNotification);
+
+
 
                 \DB::update('update students_account_seeders set logged = true where code = ?', [$student->code]);
 
@@ -114,7 +120,7 @@ class sessionStudentController extends Controller
     public function invitePartner(invitRequest $request)
     {
 
-        $credentials = $request->validated() ;
+        $credentials = $request->validated();
 
         $sender = $request->user('student');
 
@@ -133,8 +139,8 @@ class sessionStudentController extends Controller
 
         // return response(compact('receiverId', 'senderId'),200)  ;
         // // try {
-            $reciever_speciality = Student_speciality::get()->where('student_id', $receiver->id)->where('year_scholar', $this_year)->first()->speciality_id;
-            $sender_speciality = Student_speciality::get()->where('student_id', $sender->id)->where('year_scholar', $this_year)->first()->speciality_id;
+        $reciever_speciality = Student_speciality::get()->where('student_id', $receiver->id)->where('year_scholar', $this_year)->first()->speciality_id;
+        $sender_speciality = Student_speciality::get()->where('student_id', $sender->id)->where('year_scholar', $this_year)->first()->speciality_id;
 
 
         if ($reciever_speciality != $sender_speciality) {
@@ -159,10 +165,10 @@ class sessionStudentController extends Controller
 
 
             $students = Team::select('member_1', 'member_2')
-            ->where('member_1', $receiverId)
-            ->orWhere('member_2', $receiverId)->get()->first() ;
+                ->where('member_1', $receiverId)
+                ->orWhere('member_2', $receiverId)->get()->first();
 
-            $students_ids = [ $students->member_1  ,$students->member_2 ]  ;
+            $students_ids = [$students->member_1, $students->member_2];
 
 
             if (count($students_ids) > 0) {
@@ -201,9 +207,9 @@ class sessionStudentController extends Controller
             select('tel', 'email', 'name', 'code', 'invitations.created_at', 'isAccepted')
             ->join('students', 'students.id', '=', 'invitations.sender_id')
             ->where('receiver_id', $student->id)
-            ->where('isAccepted', 0 )
+            ->where('isAccepted', 0)
             ->orWhere('isAccepted', 1)
-            ->where('code','!=', $student->code )
+            ->where('code', '!=', $student->code)
             ->groupBy('name', 'code', 'invitations.created_at', 'tel', 'email', 'isAccepted')
             ->get()
         ;
@@ -272,9 +278,21 @@ class sessionStudentController extends Controller
 
             // * create team
 
-            Team::create([
+            $team = Team::create([
                 'member_1' => $sender_id,
                 'member_2' => $receiver_id,
+            ]);
+
+            //             Chat room name: Project Partners
+// Description: Working on a final project can be overwhelming, but you don't have to do it alone. Join Project Partners to find a study partner who can help you stay accountable and motivated as you work towards completing your project. Share your goals, get feedback, and celebrate your successes together.
+
+            // * create first room
+            TeamRoom::create([
+                'team_id' => $team->id,
+                'room_name' => 'Project Partners',
+                'discription'
+                => "Working on a final project can be overwhelming, but you don't have to do it alone. Join Project Partners to find a study partner who can help you stay accountable and motivated as you work towards completing your project. Share your goals, get feedback, and celebrate your successes together.:",
+                'creater_id' => 4 ,
             ]);
 
             return response('accepted', 201);
@@ -357,11 +375,11 @@ class sessionStudentController extends Controller
             //         ->whereRaw("JSON_CONTAINS(team_member, '$studentId')");
             // })->get()->first();
 
-            $students = Team::select('member_1', 'member_2', 'supervisor_id')
-            ->where('member_1', $studentId)
-            ->orWhere('member_2', $studentId)->get()->first() ;
+            $students = Team::select('member_1', 'member_2', 'supervisor_id', 'theme_id')
+                ->where('member_1', $studentId)
+                ->orWhere('member_2', $studentId)->get()->first();
 
-            $students_ids = [ $students->member_1  ,$students->member_2 ]  ;
+            $students_ids = [$students->member_1, $students->member_2];
 
 
             $team_members = array();
@@ -376,9 +394,14 @@ class sessionStudentController extends Controller
 
             $supervisor_info = Teacher::select('name', 'institutional_email', 'personal_email', 'tel')->where('id', $students->supervisor_id)->get()->first();
 
-            $response = ['supervsorInfo' => $supervisor_info, 'team_members' => $team_members];
 
 
+            // ** fetch theme information *
+
+            $theme_info = Theme::select('title', 'description')->where('id', $students->theme_id)->get();
+
+
+            $response = ['supervsorInfo' => $supervisor_info, 'team_members' => $team_members, 'theme_info' => $theme_info];
 
             return response($response, 200);
         } catch (ErrorException $th) {
@@ -389,9 +412,6 @@ class sessionStudentController extends Controller
 
     public function refreshToken(Request $request)
     {
-
-
-
         $account_status = Students_Account_Seeder::select('account_status')->where('code', $request->user()->code)->get()->first();
 
         if ($account_status->account_status == 0) {

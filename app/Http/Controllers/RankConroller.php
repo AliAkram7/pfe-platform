@@ -23,7 +23,7 @@ class RankConroller extends Controller
 
 
 
-        try {
+        // try {
             $student_without_rank = \DB::table('students_account_seeders')
                 ->select(
                     // \DB::raw("CONCAT('student: ',name, ' with code : ', code) AS value"),
@@ -35,12 +35,13 @@ class RankConroller extends Controller
                 ->leftJoin('ranks', function ($join) {
                     $join->on('student_specialities.id', '=', 'ranks.student_specialite_id');
                 })
+                ->where('student_specialities.year_scholar', date('Y'))
                 ->where('student_specialities.speciality_id', '=', $specialty_id)
                 ->whereNull('ranks.id')
                 ->get();
-        } catch (\Throwable $th) {
-            return response('error in rank controller line 30');
-        }
+        // } catch (\Throwable $th) {
+        //     return response('error in rank controller line 30');
+        // }
         return response(compact('student_without_rank'), 200);
     }
 
@@ -106,7 +107,6 @@ class RankConroller extends Controller
                     'ms2' => $worksheet->getCell('C' . $row)->getValue(),
                     'mgc' => $worksheet->getCell('D' . $row)->getValue(),
                     'observation' => $worksheet->getCell('E' . $row)->getValue(),
-
                 ];
             }
             try {
