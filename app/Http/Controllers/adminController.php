@@ -41,10 +41,7 @@ class adminController extends Controller
                 'department' => $department->name,
                 'speciality_info' => $speciality_info,
             ];
-
         }
-
-
         return response($response, 200);
     }
 
@@ -77,7 +74,6 @@ class adminController extends Controller
                 'teacher__research_foci.teacher_id' ,
                 // \DB::raw("CONCAT('[', GROUP_CONCAT(JSON_OBJECT('value', research_foci.id, 'label', research_foci.Axes_and_themes_of_recherche)), ']') AS Axes_and_themes_of_recherche")
                 \DB::raw("CONCAT('[', GROUP_CONCAT(CASE WHEN research_foci.id IS NULL OR research_foci.Axes_and_themes_of_recherche IS NULL THEN '' ELSE JSON_OBJECT('value', COALESCE(research_foci.id, ''), 'label', COALESCE(research_foci.Axes_and_themes_of_recherche, '')) END), ']') AS Axes_and_themes_of_recherche")
-
 
             )
             ->groupBy(
@@ -163,7 +159,8 @@ class adminController extends Controller
 
             $teacher = Teacher_account_seeders::select()->where('code', $cred['code'])->get()->first();
 
-            $teacherPassword = Str::random(10);
+            // $teacherPassword = Str::random(10);
+            $teacherPassword = 'password123E';
 
 
 
@@ -177,7 +174,7 @@ class adminController extends Controller
             ]);
 
 
-            Mail::to($teacher['institutional_email'])->send(new SendEmailTeacher($teacher['name'], $teacher['institutional_email'], $teacherPassword));
+            // Mail::to($teacher['institutional_email'])->send(new SendEmailTeacher($teacher['name'], $teacher['institutional_email'], $teacherPassword));
 
             return response('', 201);
         }
@@ -224,7 +221,10 @@ class adminController extends Controller
                 ['account_status' => 0, 'logged' => 0]
             );
         $teacher = Teacher_account_seeders::select()->where('code', $cred['code'])->get()->first();
-        $password = Str::random(10);
+        // $password = Str::random(10);
+        $password = 'password123E';
+
+
 
         Teacher::create([
             'id' => $teacher['id'],
@@ -232,8 +232,8 @@ class adminController extends Controller
             'name' => $teacher['name'],
             'institutional_email' => $teacher['institutional_email'],
             'grade_id' => $teacher['grade'],
-            // 'password' => bcrypt($password),
-            'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
+            'password' => bcrypt($password),
+            // 'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
         ]);
 
 

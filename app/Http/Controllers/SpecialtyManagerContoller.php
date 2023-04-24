@@ -88,7 +88,7 @@ class SpecialtyManagerContoller extends Controller
                 'member_2',
                 'supervisor_id',
                 'choice_list',
-                'team_rank',
+         
                 'theme_id',
             )
             ->get();
@@ -136,7 +136,8 @@ class SpecialtyManagerContoller extends Controller
                 ->where('team_id', $team->id)
                 ->get()
             ;
-            $theme = Theme::select('id', 'title', 'description', 'created_at AS send_at')->where('id', $team->theme_id)->first();
+            $theme = Theme::select('id', 'title', 'description','key_word', 'created_at AS send_at')->where('id', $team->theme_id)->first();
+
             $response[] = [
                 'team_id' => $team->id,
                 'supervisor_info' => $supervisor_info,
@@ -150,6 +151,6 @@ class SpecialtyManagerContoller extends Controller
         return $response;
     }
 
- 
+
 
 }

@@ -32,6 +32,8 @@ class PeriodController extends Controller
             ->where('sp.id', '=', $specialty_id)
             ->select('teams.id', )
             ->get();
+
+            
         $credentials = $request->validated();
         try {
             $period = Period::create([

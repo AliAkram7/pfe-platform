@@ -9,6 +9,7 @@ use App\Http\Controllers\DepartmentManagerController;
 use App\Http\Controllers\FramerController;
 use App\Http\Controllers\JuryMemberController;
 use App\Http\Controllers\PeriodController;
+use App\Http\Controllers\PresentationController;
 use App\Http\Controllers\RankConroller;
 use App\Http\Controllers\SESSEION\sessionStudentController;
 use App\Http\Controllers\SESSEION\sessionTeacherController;
@@ -75,6 +76,7 @@ Route::group(['middleware' => 'student.guard:student'], function () {
 
 });
 
+Route::get('/teacher/specialty_manager/fetchPresentationDates', [PresentationController::class, 'fetchPresentationDates']);
 
 
 
@@ -165,6 +167,22 @@ Route::group(['middleware' => ['teacher.guard:teacher']], function () {
 
     Route::post('/teacher/specialty_manager/sendListOfLicenseJury', [JuryMemberController::class, 'sendListOfLicenseJury']);
 
+    Route::post('/teacher/specialty_manager/createPresentation', [PresentationController::class, 'createPresentation']);
+
+
+    // fetchJuryMembersGroups
+
+    Route::get('/teacher/specialty_manager/fetchJuryMembersGroups', [JuryMemberController::class, 'fetchJuryMembersGroups']);
+
+
+
+    // fetchPresentationDates
+
+    // Route::get('/teacher/specialty_manager/fetchPresentationDates', [PresentationController::class, 'fetchPresentationDates']);
+
+
+    // affectJuryToTeamsAl
+    Route::post('/teacher/specialty_manager/affectJuryToTeamsRn', [PresentationController::class, 'affectJuryToTeamsRn']);
 
 
 
@@ -179,47 +197,47 @@ Route::post('/admin/login', [authAdminController::class, 'login']);
 
 Route::group(['middleware' => ['admin.guard:admin']], function () {
 
-Route::post('/admin/createAdmin', [authAdminController::class, 'createAdmin']);
+    Route::post('/admin/createAdmin', [authAdminController::class, 'createAdmin']);
 
-Route::get('/admin/getDepartmentsInfo', [adminController::class, 'getDepartmentsInfo']);
+    Route::get('/admin/getDepartmentsInfo', [adminController::class, 'getDepartmentsInfo']);
 
-Route::get('/teacher/department_manager/fetchStudentsData/{id}', [DepartmentManagerController::class, 'fetchStudentsData']);
+    Route::get('/teacher/department_manager/fetchStudentsData/{id}', [DepartmentManagerController::class, 'fetchStudentsData']);
 
-Route::post('/teacher/department_manager/upload', [DepartmentManagerController::class, 'upload']);
+    Route::post('/teacher/department_manager/upload', [DepartmentManagerController::class, 'upload']);
 
-Route::post('/teacher/department_manager/addStudent', [DepartmentManagerController::class, 'addStudent']);
+    Route::post('/teacher/department_manager/addStudent', [DepartmentManagerController::class, 'addStudent']);
 
-Route::post('/teacher/department_manager/lockAccount', [DepartmentManagerController::class, 'lockAccount']);
+    Route::post('/teacher/department_manager/lockAccount', [DepartmentManagerController::class, 'lockAccount']);
 
-Route::post('/teacher/department_manager/unLockAccount', [DepartmentManagerController::class, 'unLockAccount']);
+    Route::post('/teacher/department_manager/unLockAccount', [DepartmentManagerController::class, 'unLockAccount']);
 
-Route::post('/teacher/department_manager/deleteAccount', [DepartmentManagerController::class, 'deleteAccount']);
+    Route::post('/teacher/department_manager/deleteAccount', [DepartmentManagerController::class, 'deleteAccount']);
 
-Route::post('/teacher/department_manager/resetStudentAccount', [DepartmentManagerController::class, 'resetStudentAccount']);
+    Route::post('/teacher/department_manager/resetStudentAccount', [DepartmentManagerController::class, 'resetStudentAccount']);
 
-Route::post('/teacher/department_manager/updateAccount', [DepartmentManagerController::class, 'updateAccount']);
+    Route::post('/teacher/department_manager/updateAccount', [DepartmentManagerController::class, 'updateAccount']);
 
-Route::get('/admin/fetchTeachers', [adminController::class, 'fetchTeachers']);
+    Route::get('/admin/fetchTeachers', [adminController::class, 'fetchTeachers']);
 
-Route::get('/admin/fetchRoles', [adminController::class, 'fetchRoles']);
+    Route::get('/admin/fetchRoles', [adminController::class, 'fetchRoles']);
 
-Route::get('/admin/fetchGrades', [adminController::class, 'fetchGrades']);
+    Route::get('/admin/fetchGrades', [adminController::class, 'fetchGrades']);
 
-Route::get('/admin/fetchResearchFocus', [adminController::class, 'fetchResearchFocus']);
+    Route::get('/admin/fetchResearchFocus', [adminController::class, 'fetchResearchFocus']);
 
-Route::post('/admin/teacher/updateTeacherAccount', [adminController::class, 'updateTeacherAccount']);
+    Route::post('/admin/teacher/updateTeacherAccount', [adminController::class, 'updateTeacherAccount']);
 
-Route::post('/admin/teacher/lockAccount', [adminController::class, 'lockAccount']);
+    Route::post('/admin/teacher/lockAccount', [adminController::class, 'lockAccount']);
 
-Route::post('/admin/teacher/unLockAccount', [adminController::class, 'unLockAccount']);
+    Route::post('/admin/teacher/unLockAccount', [adminController::class, 'unLockAccount']);
 
-Route::post('/admin/teacher/deleteAccount', [adminController::class, 'deleteAccount']);
+    Route::post('/admin/teacher/deleteAccount', [adminController::class, 'deleteAccount']);
 
-Route::post('/admin/teacher/resetAccount', [adminController::class, 'resetAccount']);
+    Route::post('/admin/teacher/resetAccount', [adminController::class, 'resetAccount']);
 
-Route::post('/admin/teacher/addTeacher', [adminController::class, 'addTeacher']);
+    Route::post('/admin/teacher/addTeacher', [adminController::class, 'addTeacher']);
 
-} );
+});
 
 
 

@@ -250,7 +250,7 @@ class TeamsController extends Controller
                 'member_2',
                 'supervisor_id',
                 'choice_list',
-                'team_rank',
+          
                 'theme_id',
                 // '*'
             )

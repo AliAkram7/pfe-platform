@@ -23,9 +23,9 @@ class CreateTeamsTable extends Migration
 
             $table->unsignedBigInteger('supervisor_id')->nullable();// * affectation result for the license method
 
-            $table->text('choice_list')->nullable(); // * list of theme or list of teachers 
+            $table->text('choice_list')->nullable(); // * list of theme or list of teachers
 
-            $table->unsignedBigInteger('team_rank');
+            // $table->unsignedBigInteger('team_rank');
 
             $table->unsignedBigInteger('theme_id')->nullable();// * theme affectation result
 
