@@ -90,6 +90,8 @@ Route::post('/teacher/login', [AuthTeacherController::class, 'login']);
 
 Route::group(['middleware' => ['teacher.guard:teacher']], function () {
 
+
+
     Route::get('/teacher/info', [sessionTeacherController::class, 'getTeacherInfo']);
 
     Route::post('/teacher/update/info', [sessionTeacherController::class, 'teacherUpdateInfo']);
@@ -169,21 +171,12 @@ Route::group(['middleware' => ['teacher.guard:teacher']], function () {
 
     Route::post('/teacher/specialty_manager/createPresentation', [PresentationController::class, 'createPresentation']);
 
-
-    // fetchJuryMembersGroups
-
     Route::get('/teacher/specialty_manager/fetchJuryMembersGroups', [JuryMemberController::class, 'fetchJuryMembersGroups']);
 
-
-
-    // fetchPresentationDates
-
-    // Route::get('/teacher/specialty_manager/fetchPresentationDates', [PresentationController::class, 'fetchPresentationDates']);
-
-
-    // affectJuryToTeamsAl
     Route::post('/teacher/specialty_manager/affectJuryToTeamsRn', [PresentationController::class, 'affectJuryToTeamsRn']);
 
+
+    Route::get('/teacher/fetchResearchFocus', [adminController::class, 'fetchResearchFocus']);
 
 
 });

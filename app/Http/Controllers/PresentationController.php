@@ -76,6 +76,7 @@ class PresentationController extends Controller
 
         $tester_1 = Teacher::select('id')->where('code', $credentials['tester_1'])->get()->first()->id;
         $tester_2 = Teacher::select('id')->where('code', $credentials['tester_2'])->get()->first()->id;
+
         jury_member::create([
             'teacher_id' => $tester_1,
             'group_number' => $group_number + 2,
@@ -88,6 +89,9 @@ class PresentationController extends Controller
             'specialty_id' => $specialty_managed_id,
             'isPresident' => false,
         ]);
+
+        Presentation::where('team_id', $credentials['team_id'])->delete();
+
 
         Presentation::create([
             'team_id' => $credentials['team_id'],
@@ -143,15 +147,13 @@ class PresentationController extends Controller
                 foreach ($teams as $team) {
                     // !! get team presentation information
 
-
-
-
                     $supervisor_info = Teacher::
                         select('name')
                         ->leftJoin('teams', 'teams.supervisor_id', '=', 'teachers.id')
                         ->where('supervisor_id', $team->supervisor_id)
                         ->where('teams.id', $team->id)
                         ->get()->first();
+
 
                     $member_1_info = Students_Account_Seeder::select('name')
                         ->where('students_account_seeders.id', $team->member_1)->get()->first();
@@ -221,7 +223,7 @@ class PresentationController extends Controller
                             'test_project_date' => $presentation['test_project_date'],
                         ];
 
-                        $teacher_jury = [] ;
+                        $teacher_jury = [];
 
 
                     }
@@ -259,6 +261,7 @@ class PresentationController extends Controller
         $specialty_managed_id = Teacher_specialty_manager::select('specialty_id')->where('teacher_id', $teacher->id)->get()->first()->specialty_id;
 
 
+
         if (
             $teams = \DB::table('teams')
                 ->join('students_account_seeders as s', function ($join) {
@@ -274,7 +277,8 @@ class PresentationController extends Controller
                     'member_2',
                     'supervisor_id',
                     'theme_id',
-                )->get()
+                )
+                ->get()
         ) {
 
 
@@ -282,8 +286,6 @@ class PresentationController extends Controller
                 ->where('specialty_id', $specialty_managed_id)
                 ->groupBy('group_number')
                 ->get();
-
-
 
             $juryGroup_numbers_oc = $allJuryGroups->map(function ($juryGroup) {
                 return [
@@ -294,7 +296,6 @@ class PresentationController extends Controller
 
             foreach ($teams as $team) {
 
-
                 $supervisorId = $team->supervisor_id;
 
                 $juryGroupsCanAffected = jury_member::select('group_number')
@@ -304,6 +305,7 @@ class PresentationController extends Controller
                             ->from('jury_members')
                             ->where('teacher_id', '=', $supervisorId)
                             ->where('specialty_id', $specialty_managed_id);
+                        // ->get();
                     })
                     ->groupBy('group_number')
                     ->get()
@@ -324,6 +326,8 @@ class PresentationController extends Controller
 
                 $dateTest = new \DateTime($credentials['date_presentation']);
                 $formattedDatePresentation = $dateTest->format('Y-m-d H:i:s');
+
+                Presentation::where('team_id', $team->id)->delete();
 
                 if (
                     Presentation::create([

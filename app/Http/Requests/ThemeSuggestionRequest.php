@@ -26,11 +26,11 @@ class ThemeSuggestionRequest extends FormRequest
         return [
             'title' => 'string|required',
             'specialty' => 'string|required',
-            'searchDomain' => 'required|string' ,
-            'description' => 'required|string' ,
-            'objectives' =>'required|string' ,
-            'keyWords' => 'array',
-            'workPlan' => 'array'
+            'searchDomain' => 'required|array',
+            'description' => 'required|string',
+            'objectives' => 'required|string',
+            'keyWords' => 'required|array',
+            'workPlan' => 'required|array'
         ];
     }
 }

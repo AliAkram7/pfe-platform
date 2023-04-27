@@ -8,6 +8,7 @@ use App\Http\Requests\SpecialtyManagerValidateRequest;
 use App\Http\Requests\ThemeSuggestionRequest;
 use App\Models\Affectation_method;
 use App\Models\Framer;
+use App\Models\Research_focus;
 use App\Models\Specialitie;
 use App\Models\Students_Account_Seeder;
 use App\Models\Student_speciality;
@@ -42,22 +43,35 @@ class ThemeController extends Controller
         }
 
 
-        // try {
-        Theme::create(
-            [
-                'title' => $credentials['title'],
-                'description' => $credentials['description'],
-                'research_domain' => $credentials['searchDomain'],
-                'objectives_of_the_project' => $credentials['objectives'],
-                'key_word' => json_encode($credentials['keyWords']),
-                'work_plan' => json_encode($credentials['workPlan']),
-                'teacher_id' => $sender->id,
-                'specialty_id' => $specialty_id,
-            ]
-        );
-        // } catch (\Throwable $th) {
-        //     return response('send Error', 403);
-        // }
+        $research_domain_table = [];
+
+        foreach ($credentials['searchDomain'] as $domain) {
+            $research_domain_table[] = Research_focus::select('Axes_and_themes_of_recherche')
+                ->where('id', $domain)
+                ->get()
+                ->first();
+        }
+
+        $research_domain_table_json = json_encode($research_domain_table);
+
+
+
+        try {
+            Theme::create(
+                [
+                    'title' => $credentials['title'],
+                    'description' => $credentials['description'],
+                    'research_domain' => $research_domain_table_json,
+                    'objectives_of_the_project' => $credentials['objectives'],
+                    'key_word' => json_encode($credentials['keyWords']),
+                    'work_plan' => json_encode($credentials['workPlan']),
+                    'teacher_id' => $sender->id,
+                    'specialty_id' => $specialty_id,
+                ]
+            );
+        } catch (\Throwable $th) {
+            return response('send Error', 403);
+        }
 
         return response('sended successfully', 201);
     }
@@ -157,7 +171,7 @@ class ThemeController extends Controller
                 'objectives_of_the_project' => $theme_info->objectives_of_the_project,
                 'key_word' => json_decode($theme_info->key_word),
                 'work_plan' => json_decode($theme_info->work_plan),
-                'research_domain' => $theme_info->research_domain,
+                'research_domain' => json_decode($theme_info->research_domain),
                 'specialty_manager_validation' => $theme_info->specialty_manager_validation,
                 'name' => $theme_info->name,
                 'created_at' => $theme_info->created_at,
