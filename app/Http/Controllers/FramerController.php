@@ -116,9 +116,15 @@ class FramerController extends Controller
 
         $specialty_managed_id = Teacher_specialty_manager::select('specialty_id')->where('teacher_id', $teacher->id)->get()->first()->specialty_id;
 
+        $new_inscription = \DB::table('year_scholars')
+            ->select('id AS year_id')
+            ->orderByDesc('end_date')
+            ->limit(1)
+            ->get()->first();
 
 
         $teams = Team::select('teams.id')
+            ->where('year_scholar_id', $new_inscription->year_id)
             ->join('student_specialities', 'student_specialities.student_id', '=', 'teams.member_1')
             ->where('speciality_id', $specialty_managed_id)
             ->orderBy('teams.id')
@@ -132,7 +138,7 @@ class FramerController extends Controller
         foreach ($teams as $team) {
 
             $matchingThemes = Framer::where('specialty_id', $specialty_managed_id)
-                ->orderBy('created_at' )
+                ->orderBy('created_at')
                 ->pluck('teacher_id')
                 ->toArray();
 
@@ -196,9 +202,21 @@ class FramerController extends Controller
 
             // return $student /;
 
+            $student_inscription = \DB::table('year_scholars AS ys')
+                ->join('student_specialities AS ss', 'ys.id', '=', 'ss.year_scholar_id')
+                ->select('ys.id AS year_id', 'ss.id', 'ss.speciality_id', 'ys.end_date')
+                ->where('ss.student_id', $student)
+                ->orderBy('ys.end_date', 'DESC')
+                ->limit(1)
+                ->get()
+                ->first();
+
             $team_info = Team::select('id', 'member_1', 'member_2', 'choice_list')
-                ->where('member_1', $student)
-                ->orWhere('member_2', $student)->get()->first();
+                ->where('year_scholar_id', $student_inscription->year_id)
+                ->where(function ($query) use ($student) {
+                    $query->where('member_1', $student)
+                        ->orWhere('member_2', $student);
+                });
 
             if (in_array($student, $student_black_list)) {
                 echo "student $student  in team  $team_info->id  blacklisted\n";
@@ -226,7 +244,7 @@ class FramerController extends Controller
                     $found = false;
                     foreach ($list_framer_array as &$item) {
                         if ($item['teacher_id'] == $framer) {
-                            echo $item['teacher_id'] . "found\n" ;
+                            echo $item['teacher_id'] . "found\n";
                             $found = true;
                             break;
                         }

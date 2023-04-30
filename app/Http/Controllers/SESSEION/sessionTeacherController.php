@@ -137,9 +137,16 @@ class sessionTeacherController extends Controller
 
         $teacher_id = $request->user()->id;
 
+        $new_inscription = \DB::table('year_scholars')
+            ->select('id AS year_id')
+            ->orderByDesc('end_date')
+            ->limit(1)
+            ->get()->first();
+
+
         $Teams = Team::select('member_1', 'member_2', 'teams.id', 'speciality_id', 'method', 'fullname AS specialty_name', 'departments.name AS dep_name', 'specialty_id')
             ->leftJoin('student_specialities', 'student_specialities.student_id', '=', 'member_1')
-            ->where('year_scholar', Date('Y'))
+            ->where('teams.year_scholar_id', $new_inscription->year_id)
             ->leftJoin('affectation_methods', 'affectation_methods.specialty_id', '=', 'speciality_id')
             ->leftJoin('specialities', 'specialities.id', '=', 'speciality_id')
             ->leftJoin('departments', 'departments.id', '=', 'specialities.department_id')

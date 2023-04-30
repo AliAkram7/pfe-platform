@@ -13,7 +13,7 @@ class Student_speciality extends Model
     protected $fillable = [
         'student_id',
         'speciality_id',
-        'year_scholar'
+        'year_scholar_id'
     ];
 
 

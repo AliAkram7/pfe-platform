@@ -84,13 +84,7 @@ class AuthStudentsController extends Controller
                     );
 
 
-                Student_speciality::create(
-                    [
-                    'student_id'=>$user->id,
-                    'speciality_id'=>$studentInformation['specialty_id'],
-                    'year_scholar'=>date('Y')
-                    ]
-                    ) ;
+
 
                     $token = Auth::guard('student')->attempt($credentials);
                     if (!$token) {

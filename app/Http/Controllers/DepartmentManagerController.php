@@ -9,6 +9,7 @@ use App\Models\department;
 use App\Models\Student;
 use App\Models\Students_Account_Seeder;
 
+use App\Models\Student_speciality;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -44,11 +45,16 @@ class DepartmentManagerController extends Controller
     }
 
 
-    public function fetchStudentsData(Request $request, $id)
+    public function fetchStudentsData(Request $request, $id, $year_id)
     {
+
+        // echo $id ;
+        // return  $year_id ;
 
         $list_accounts = $students = \DB::table('students_account_seeders as sa')
             ->leftJoin('students as s', 'sa.code', '=', 's.code')
+            ->leftJoin('student_specialities', 'student_specialities.student_id', '=', 'sa.id')
+            // ->leftJoin('year_scholars', 'year_scholars.id', '=', 'student_specialities.year_scholars_id')
             ->select(
                 'sa.code',
                 \DB::raw('sa.name'),
@@ -58,7 +64,7 @@ class DepartmentManagerController extends Controller
                 'sa.account_status',
                 'sa.logged',
                 'sa.logged_at',
-                'sa.specialty_id',
+                // 'sa.specialty_id',
             )
             ->union(\DB::table('students as s')
                 ->join('students_account_seeders as sa', 's.code', '=', 'sa.code')
@@ -71,18 +77,19 @@ class DepartmentManagerController extends Controller
                     'sa.account_status',
                     'sa.logged',
                     'sa.logged_at',
-                    'sa.specialty_id',
+                    // 'sa.specialty_id',
                 )
                 ->whereNotIn('s.code', function ($query) {
                     $query->select('code')->from('students_account_seeders');
-                }))->where('specialty_id', $id)
+                }))
+            ->where('student_specialities.speciality_id', $id)
+            ->where('year_scholar_id', $year_id)
             ->get();
         return response(compact('list_accounts'), 200);
     }
 
     public function upload(UploadSeederRequest $request)
     {
-
 
         $cred = $request->validated();
 
@@ -94,46 +101,79 @@ class DepartmentManagerController extends Controller
 
         $highestRow = $worksheet->getHighestRow();
 
+        for ($row = 2; $row < $highestRow; $row++) {
 
-        for ($row = 2; $row <= $highestRow; $row++) {
-            $data = [
-                'code' => $worksheet->getCell('A' . $row)->getValue(),
-                'name' => $worksheet->getCell('B' . $row)->getValue(),
-                'default_password' => Str::random(10),
-                'logged' => false,
-                'account_status' => false,
-                'specialty_id' => $cred['specialty_id'],
-                'year_scholar' => date('Y'),
+            $student = Students_Account_Seeder::select()->where('code', $worksheet->getCell('A' . $row)->getValue())->get()->first();
 
-            ];
-
-            \DB::table('students_account_seeders')->insert($data);
+            if ($student == null) {
+                if (
+                    $user = Students_Account_Seeder::create(
+                        [
+                            'code' => $worksheet->getCell('A' . $row)->getValue(),
+                            'name' => $worksheet->getCell('B' . $row)->getValue(),
+                            'default_password' => Str::random(10),
+                        ]
+                    )
+                ) {
+                    Student_speciality::create(
+                        [
+                            'student_id' => $user->id,
+                            'speciality_id' => $cred['specialty_id'],
+                            'year_scholar_id' => $cred['yearId']
+                        ]
+                    );
+                }
+            } else {
+                Student_speciality::create(
+                    [
+                        'student_id' => $student->id,
+                        'speciality_id' => $cred['specialty_id'],
+                        'year_scholar_id' => $cred['yearId']
+                    ]
+                );
+            }
         }
-
-
     }
-
 
     public function addStudent(addStudentRequest $request)
     {
         $cred = $request->validated();
 
-        if (
-            Students_Account_Seeder::create(
-                [
-                    'code' => $cred['code'],
-                    'name' => $cred['name'],
-                    'default_password' => Str::random(10),
-                    'specialty_id' => $cred['specialty_id'],
-                    'year_scholar' => date('Y'),
-                ]
+        $student = Students_Account_Seeder::select()->where('code', $cred['code'])->get()->first();
+
+        if ($student == null) {
+            if (
+                $user = Students_Account_Seeder::create(
+                    [
+                        'code' => $cred['code'],
+                        'name' => $cred['name'],
+                        'default_password' => Str::random(10),
+                    ]
                 )
 
-        ) {
-            return response('', 201);
+            ) {
+
+                Student_speciality::create(
+                    [
+                        'student_id' => $user->id,
+                        'speciality_id' => $cred['specialty_id'],
+                        'year_scholar_id' => $cred['yearId']
+                    ]
+                );
+                return response('', 201);
+            }
+
+
+        } else {
+
+            Student_speciality::create(
+                [
+                    'student_id' => $student->id,
+                    'speciality_id' => $cred['specialty_id'],
+                    'year_scholar_id' => $cred['yearId']
+                ]
+            );
         }
-
-
 
         return response('', 403);
 
@@ -169,16 +209,16 @@ class DepartmentManagerController extends Controller
         return response('account deleted', 201);
     }
 
-// ! reset account
-public function resetStudentAccount(udStudentRequest $request)
-{
-    $cred = $request->validated();
-    Student::where('code', $cred['code'])->delete();
-    Students_Account_Seeder::
-    where('code', $cred['code'])->
-    update(['account_status' => 0 ,  'logged'=>0 ]);
-    return response('account deleted', 201);
-}
+    // ! reset account
+    public function resetStudentAccount(udStudentRequest $request)
+    {
+        $cred = $request->validated();
+        Student::where('code', $cred['code'])->delete();
+        Students_Account_Seeder::
+            where('code', $cred['code'])->
+            update(['account_status' => 0, 'logged' => 0]);
+        return response('account deleted', 201);
+    }
 
 
     // ! update account
@@ -192,8 +232,8 @@ public function resetStudentAccount(udStudentRequest $request)
                 where('code', $cred['code'])->
                 update(['name' => $cred['name']]);
             Student::
-            where('code', $cred['code'])->
-            update(['name' => $cred['name']]);
+                where('code', $cred['code'])->
+                update(['name' => $cred['name']]);
 
 
 
@@ -204,7 +244,7 @@ public function resetStudentAccount(udStudentRequest $request)
                 update(['code' => $cred['updated_code']]);
 
 
-                Student::
+            Student::
                 where('code', $cred['code'])->
                 update(['code' => $cred['updated_code']]);
 

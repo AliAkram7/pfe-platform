@@ -24,6 +24,7 @@ class uploadRaknsRequest extends FormRequest
     public function rules()
     {
         return [
+            'yearId' => 'numeric|required',
             'file' => 'file'
         ];
     }

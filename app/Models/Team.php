@@ -12,7 +12,7 @@ class Team extends Model
     protected $fillable = [
         'member_1',
         'member_2',
-        
+        'year_scholar_id',
         'choice_list',
         'supervisor_id'
     ];

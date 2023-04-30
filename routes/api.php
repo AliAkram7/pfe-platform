@@ -19,6 +19,7 @@ use App\Http\Controllers\SESSEION\TeamsController;
 
 use App\Http\Controllers\SpecialtyManagerContoller;
 use App\Http\Controllers\ThemeController;
+use App\Http\Controllers\YearScholarController;
 use App\Models\Framer;
 use Illuminate\Support\Facades\Route;
 
@@ -47,7 +48,10 @@ Route::group(['middleware' => 'student.guard:student'], function () {
 
     Route::post('/student/update/info', [sessionStudentController::class, 'updateStudentInfo']);
 
-    Route::get('/getRanking', [sessionStudentController::class, 'getRanking']);
+    Route::get('/getRanking/{studentSpecialtyId}', [sessionStudentController::class, 'getRanking']);
+    Route::get('/getInscriptions', [sessionStudentController::class, 'getInscriptions']);
+
+
     Route::post('/invitePartner', [sessionStudentController::class, 'invitePartner']);
     Route::get('/getRecievedInvitation', [sessionStudentController::class, 'getRecievedInvitation']);
     Route::get('/getSendedInvitation', [sessionStudentController::class, 'getSendedInvitation']);
@@ -118,9 +122,9 @@ Route::group(['middleware' => ['teacher.guard:teacher']], function () {
 
     Route::post('/teacher/specialty_manager/publishTheListOfThemes', [ThemeController::class, 'publishTheListOfThemes']);
 
-    Route::get('/teacher/specialty_manager/getRanking', [SpecialtyManagerContoller::class, 'getRanking']);
+    Route::get('/teacher/specialty_manager/getRanking/{year_id}', [SpecialtyManagerContoller::class, 'getRanking']);
 
-    Route::get('/teacher/specialty_manager/getStudentWithoutRank', [RankConroller::class, 'getStudentWithoutRank']);
+    Route::get('/teacher/specialty_manager/getStudentWithoutRank/{yearId}', [RankConroller::class, 'getStudentWithoutRank']);
 
     Route::post('/teacher/specialty_manager/addRankByStudent', [RankConroller::class, 'addRankByStudent']);
 
@@ -130,7 +134,7 @@ Route::group(['middleware' => ['teacher.guard:teacher']], function () {
 
     Route::post('/teacher/specialty_manager/updateRank', [RankConroller::class, 'updateRank']);
 
-    Route::get('/teacher/specialty_manager/fetchTeams', [SpecialtyManagerContoller::class, 'fetchTeams']);
+    Route::get('/teacher/specialty_manager/fetchTeams/{selectedYearId}', [SpecialtyManagerContoller::class, 'fetchTeams']);
 
     Route::get('/teacher/specialty_manager/fetchFramerTeacher', [FramerController::class, 'fetchFramerTeacher']);
 
@@ -144,7 +148,7 @@ Route::group(['middleware' => ['teacher.guard:teacher']], function () {
 
     Route::post('/teacher/specialty_manager/affectThemeToStudents', [ThemeController::class, 'affectThemeToStudents']);
 
-    Route::get('/teacher/specialty_manager/fetchSingleStudents', [TeamsController::class, 'fetchSingleStudents']);
+    Route::get('/teacher/specialty_manager/fetchSingleStudents/{selectedYearId}', [TeamsController::class, 'fetchSingleStudents']);
 
     Route::post('/teacher/specialty_manager/addSingleStudentInTeam', [TeamsController::class, 'addSingleStudentInTeam']);
 
@@ -179,6 +183,10 @@ Route::group(['middleware' => ['teacher.guard:teacher']], function () {
     Route::get('/teacher/fetchResearchFocus', [adminController::class, 'fetchResearchFocus']);
 
 
+    Route::get('/teacher/fetchYearsScholar', [YearScholarController::class, 'fetchYearsScholar']);
+
+
+
 });
 
 
@@ -194,7 +202,7 @@ Route::group(['middleware' => ['admin.guard:admin']], function () {
 
     Route::get('/admin/getDepartmentsInfo', [adminController::class, 'getDepartmentsInfo']);
 
-    Route::get('/teacher/department_manager/fetchStudentsData/{id}', [DepartmentManagerController::class, 'fetchStudentsData']);
+    Route::get('/teacher/department_manager/fetchStudentsData/{id}/{year_id}', [DepartmentManagerController::class, 'fetchStudentsData']);
 
     Route::post('/teacher/department_manager/upload', [DepartmentManagerController::class, 'upload']);
 
@@ -229,6 +237,11 @@ Route::group(['middleware' => ['admin.guard:admin']], function () {
     Route::post('/admin/teacher/resetAccount', [adminController::class, 'resetAccount']);
 
     Route::post('/admin/teacher/addTeacher', [adminController::class, 'addTeacher']);
+
+    // fetchYearsScholar
+
+    Route::get('/admin/fetchYearsScholar', [YearScholarController::class, 'fetchYearsScholar']);
+
 
 });
 

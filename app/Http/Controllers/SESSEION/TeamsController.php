@@ -33,7 +33,24 @@ class TeamsController extends Controller
 
         $studentId = $student->id;
 
-        $team_info = Team::select('id', 'member_1', 'member_2', )->where('member_1', $studentId)->orWhere('member_2', $studentId)->get()->first();
+        $student_inscription = \DB::table('year_scholars AS ys')
+            ->join('student_specialities AS ss', 'ys.id', '=', 'ss.year_scholar_id')
+            ->select('ys.id AS year_id', 'ss.id', 'ss.speciality_id', 'ys.end_date')
+            ->where('ss.student_id', $studentId)
+            ->orderBy('ys.end_date', 'DESC')
+            ->limit(1)
+            ->get()
+            ->first();
+
+
+        $team_info = Team::select('id', 'member_1', 'member_2', )
+            ->where('year_scholar_id', $student_inscription->year_id)
+
+            ->where(function ($query) use ($studentId) {
+                $query->where('member_1', $studentId)
+                    ->orWhere('member_2', $studentId);
+            })
+            ->get()->first();
 
         // $fetch_rooms = TeamRoom::
         //     select('team_rooms.id AS  id_room', 'name', 'team_rooms.created_at', 'room_name', 'team_rooms.discription', 'creater_id')
@@ -60,14 +77,15 @@ class TeamsController extends Controller
             'team_rooms.created_at',
             'room_name',
             'team_rooms.discription',
-            'creater_id')
-        ->leftJoin('teams', 'teams.id', '=', 'team_id')
-        ->leftJoin('students as s1', 's1.id', '=', 'teams.member_1')
-        ->leftJoin('students as s2', 's2.id', '=', 'teams.member_2')
-        ->leftJoin('teachers as t', 't.id', '=', 'teams.supervisor_id')
-        ->where('team_id', $team_info->id)
-        ->orderBy('created_at', 'desc')
-        ->get();
+            'creater_id'
+        )
+            ->leftJoin('teams', 'teams.id', '=', 'team_id')
+            ->leftJoin('students as s1', 's1.id', '=', 'teams.member_1')
+            ->leftJoin('students as s2', 's2.id', '=', 'teams.member_2')
+            ->leftJoin('teachers as t', 't.id', '=', 'teams.supervisor_id')
+            ->where('team_id', $team_info->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
         return $fetch_rooms;
     }
 
@@ -78,14 +96,24 @@ class TeamsController extends Controller
         $sender = $request->user();
         $senderId = $sender->id;
 
-        $team_info = Team::select('id', 'member_1', 'member_2', )->where('member_1', $senderId)->orWhere('member_2', $senderId)->get()->first();
+        $team_info = Team::select('id', 'member_1', 'member_2', )
+            ->where('member_1', $senderId)
+            ->orWhere('member_2', $senderId)
+            ->get()->first();
+
+
+        $creater_id = 1;
+
+        if ($team_info->member_1 != $senderId) {
+            $creater_id = 2;
+        }
 
 
         TeamRoom::create([
             'team_id' => $team_info->id,
             'room_name' => $request['roomName'],
             'discription' => $request['roomDiscription'],
-            'creater_id' => $senderId,
+            'creater_id' => $creater_id,
         ]);
 
         return response('room created ', 200);
@@ -98,7 +126,19 @@ class TeamsController extends Controller
 
         $teacher_id = $request->user()->id;
 
-        $Teams = Team::select('member_1', 'member_2', 'id')->where('supervisor_id', $teacher_id)->get();
+
+        $new_inscription = \DB::table('year_scholars')
+            ->select('id AS year_id')
+            ->orderByDesc('end_date')
+            ->limit(1)
+            ->get()->first();
+
+
+        $Teams = Team::select('member_1', 'member_2', 'id')
+            ->where('supervisor_id', $teacher_id)
+            ->where('year_scholar_id', $new_inscription->year_id)
+            ->get();
+
 
         $teams_list = array();
         $team_info = array();
@@ -136,18 +176,19 @@ class TeamsController extends Controller
 
 
 
-            $fetch_rooms = TeamRoom::select(
-                'team_rooms.id AS id_room',
-                \DB::raw("CASE
+        $fetch_rooms = TeamRoom::select(
+            'team_rooms.id AS id_room',
+            \DB::raw("CASE
                     WHEN creater_id = 1 THEN IFNULL(s1.name, 'Unknown')
                     WHEN creater_id = 2 THEN IFNULL(s2.name, 'Unknown')
                     WHEN creater_id = 3 THEN IFNULL(t.name, 'Unknown')
                     ELSE 'system'
                 END as name"),
-                'team_rooms.created_at',
-                'room_name',
-                'team_rooms.discription',
-                'creater_id')
+            'team_rooms.created_at',
+            'room_name',
+            'team_rooms.discription',
+            'creater_id'
+        )
             ->leftJoin('teams', 'teams.id', '=', 'team_id')
             ->leftJoin('students as s1', 's1.id', '=', 'teams.member_1')
             ->leftJoin('students as s2', 's2.id', '=', 'teams.member_2')
@@ -165,10 +206,25 @@ class TeamsController extends Controller
     {
 
         $credentials = $request->validated();
-        $student = $request->user();
+        $studentId = $request->user()->id;
 
+        $student_inscription = \DB::table('year_scholars AS ys')
+            ->join('student_specialities AS ss', 'ys.id', '=', 'ss.year_scholar_id')
+            ->select('ys.id AS year_id', 'ss.id', 'ss.speciality_id', 'ys.end_date')
+            ->where('ss.student_id', $studentId)
+            ->orderBy('ys.end_date', 'DESC')
+            ->limit(1)
+            ->get()
+            ->first();
 
-        $team = Team::where('member_1', $student->id)->orWhere('member_2', $student->id)->first();
+        $team = Team::
+            where('year_scholar_id', $student_inscription->year_id)
+            ->where(function ($query) use ($studentId) {
+                $query->where('member_1', $studentId)
+                    ->orWhere('member_2', $studentId);
+            })
+            ->get()
+            ->first();
 
 
         // try {
@@ -185,7 +241,7 @@ class TeamsController extends Controller
 
     }
 
-    public function fetchSingleStudents(Request $request)
+    public function fetchSingleStudents(Request $request, $selectedYearId)
     {
         $teacher = $request->user('teacher');
 
@@ -196,18 +252,20 @@ class TeamsController extends Controller
             'code AS value',
             \DB::raw("CONCAT('student: ',name, ' with code : ', code) AS label"),
         )
-
             ->leftJoin('student_specialities', 'students_account_seeders.id', '=', 'student_specialities.student_id')
+            ->leftJoin('year_scholars as ys', 'ys.id', '=', 'student_specialities.year_scholar_id')
             ->where('student_specialities.speciality_id', '=', $specialty_id)
-            ->whereNotIn('students_account_seeders.id', function ($query) {
+            ->whereNotIn('students_account_seeders.id', function ($query) use ($selectedYearId) {
                 $query->select('students_account_seeders.id')
                     ->from('students_account_seeders')
                     ->leftJoin('teams', function ($join) {
                             $join->on('students_account_seeders.id', '=', 'teams.member_1')
                                 ->orWhere('students_account_seeders.id', '=', 'teams.member_2');
                         })
+                    ->where('teams.year_scholar_id', $selectedYearId)
                     ->whereNotNull('teams.id');
             })
+            ->distinct()
             ->get();
 
     }
@@ -217,7 +275,22 @@ class TeamsController extends Controller
 
         $credentials = $request->validated();
         $student_id = Students_Account_Seeder::select('id')->where('code', $credentials['code'])->get()->first()->id;
-        if (Team::create(['member_1' => $student_id])) {
+
+        $student_inscription = \DB::table('year_scholars AS ys')
+            ->join('student_specialities AS ss', 'ys.id', '=', 'ss.year_scholar_id')
+            ->select('ys.id AS year_id', 'ss.id', 'ss.speciality_id', 'ys.end_date')
+            ->where('ss.student_id', $student_id)
+            ->orderBy('ys.end_date', 'DESC')
+            ->limit(1)
+            ->get()
+            ->first();
+
+        if (
+            Team::create([
+                'member_1' => $student_id,
+                'year_scholar_id' => $student_inscription->year_id
+            ])
+        ) {
             return response('student add successfully', 201);
         } else
             return response('error', 403);
@@ -250,7 +323,7 @@ class TeamsController extends Controller
                 'member_2',
                 'supervisor_id',
                 'choice_list',
-          
+
                 'theme_id',
                 // '*'
             )

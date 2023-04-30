@@ -25,9 +25,9 @@ class addStudentRequest extends FormRequest
     {
         return [
             'name'=>'required|string',
-            'code'=>"required|numeric|min:8|unique:students_account_seeders,code",
+            'code'=>"required|numeric|min:8",
             'specialty_id'=>"required|numeric|exists:specialities,id",
-
+            'yearId'=>"required|numeric|exists:year_scholars,id",
         ];
     }
 }

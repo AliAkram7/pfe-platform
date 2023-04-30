@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+
 class Teacher extends Authenticatable implements JWTSubject
 {
     use HasApiTokens, HasFactory, Notifiable;
@@ -64,28 +65,37 @@ class Teacher extends Authenticatable implements JWTSubject
 
         // *  check if teacher is  department manager #
 
-        $teacherId = $this->id ;
+        $teacherId = $this->id;
 
         $isDepartmentManager = teacher_department_manager::select()->where('id_teacher', $teacherId)->count();
-        $isSpecialtyManager = Teacher_specialty_manager::select()->where('teacher_id', $teacherId)->count() ;
-        $pfe_method = 0  ;
+        $isSpecialtyManager = Teacher_specialty_manager::select()->where('teacher_id', $teacherId)->count();
+        $pfe_method = 0;
         if ($isSpecialtyManager) {
-            $specialty_managed = Teacher_specialty_manager::select('specialty_id')->where('teacher_id', $teacherId)->get()->first() ;
+            $specialty_managed = Teacher_specialty_manager::select('specialty_id')->where('teacher_id', $teacherId)->get()->first();
 
-            if ($affectation_method = Affectation_method::select('method')->where('specialty_id',$specialty_managed->specialty_id )->first() ) {
-                $pfe_method = $affectation_method->method ;
+            if ($affectation_method = Affectation_method::select('method')->where('specialty_id', $specialty_managed->specialty_id)->first()) {
+                $pfe_method = $affectation_method->method;
             }
         }
 
         $logged = Teacher_account_seeders::select('logged')->where('code', $this->code)->get()->first()['logged'];
 
 
+        $year_scholar_id = \DB::table('year_scholars')
+            ->select('id AS year_id')
+            ->orderByDesc('end_date')
+            ->limit(1)
+            ->get()->first()->year_id;
+
+
+
         return [
             'role' => 'teacher',
             'first_login' => !$logged,
-            'department_manager'=>$isDepartmentManager,
-            'specialty_manager'=>$isSpecialtyManager ,
-            'pfe_method' =>$pfe_method ,
+            'department_manager' => $isDepartmentManager,
+            'specialty_manager' => $isSpecialtyManager,
+            'pfe_method' => $pfe_method,
+            'year_scholar_id' => $year_scholar_id
         ];
     }
 

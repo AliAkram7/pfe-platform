@@ -18,12 +18,14 @@ class CreateStudentSpecialitiesTable extends Migration
 
             $table->unsignedBigInteger('student_id');
             $table->unsignedBigInteger('speciality_id');
-            $table->string('year_scholar', 9);
+            $table->unsignedBigInteger('year_scholar_id');
 
             $table->timestamps();
 
             $table->foreign('student_id')->references('id')->on('students');
-            $table->foreign('specialty_id')->references('id')->on('specialities');
+            $table->foreign('speciality_id')->references('id')->on('specialities');
+            $table->foreign('year_scholar_id')->references('id')->on('year_scholars');
+
 
         });
     }

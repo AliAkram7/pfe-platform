@@ -25,6 +25,7 @@ class UploadSeederRequest extends FormRequest
     {
         return [
             'specialty_id' => 'required|numeric|exists:specialities,id',
+            'yearId' =>'required|numeric|exists:year_scholars,id',
             'file'=> 'file'
         ];
     }

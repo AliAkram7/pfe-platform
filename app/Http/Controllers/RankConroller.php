@@ -14,7 +14,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class RankConroller extends Controller
 {
-    public function getStudentWithoutRank(Request $request)
+    public function getStudentWithoutRank(Request $request, $yearId)
     {
         // TODO get the student those haven't rank
         $teacher = $request->user('teacher');
@@ -24,21 +24,21 @@ class RankConroller extends Controller
 
 
         // try {
-            $student_without_rank = \DB::table('students_account_seeders')
-                ->select(
-                    // \DB::raw("CONCAT('student: ',name, ' with code : ', code) AS value"),
-                    'code AS value',
-                    \DB::raw("CONCAT('student: ',name, ' with code : ', code) AS label"),
-                    'code AS description'
-                )
-                ->join('student_specialities', 'students_account_seeders.id', '=', 'student_specialities.student_id')
-                ->leftJoin('ranks', function ($join) {
-                    $join->on('student_specialities.id', '=', 'ranks.student_specialite_id');
-                })
-                ->where('student_specialities.year_scholar', date('Y'))
-                ->where('student_specialities.speciality_id', '=', $specialty_id)
-                ->whereNull('ranks.id')
-                ->get();
+        $student_without_rank = \DB::table('students_account_seeders')
+            ->select(
+                // \DB::raw("CONCAT('student: ',name, ' with code : ', code) AS value"),
+                'code AS value',
+                \DB::raw("CONCAT('student: ',name, ' with code : ', code) AS label"),
+                'code AS description'
+            )
+            ->join('student_specialities', 'students_account_seeders.id', '=', 'student_specialities.student_id')
+            ->leftJoin('ranks', function ($join) {
+                $join->on('student_specialities.id', '=', 'ranks.student_specialite_id');
+            })
+            ->where('student_specialities.year_scholar_id', $yearId)
+            ->where('student_specialities.speciality_id', '=', $specialty_id)
+            ->whereNull('ranks.id')
+            ->get();
         // } catch (\Throwable $th) {
         //     return response('error in rank controller line 30');
         // }
@@ -64,6 +64,7 @@ class RankConroller extends Controller
         $student_speciality_id = Student_speciality::select('student_specialities.id')
             ->leftJoin('specialities', 'specialities.id', '=', 'student_specialities.speciality_id')
             ->leftJoin('students_account_seeders', 'students_account_seeders.id', '=', 'student_specialities.student_id')
+            ->where('year_scholar_id', $credentials['yearId'])
             ->where('code', $credentials['code'])
             ->get()->first()->id;
 
@@ -98,24 +99,28 @@ class RankConroller extends Controller
                 $student_speciality_id = Student_speciality::select('student_specialities.id')
                     ->leftJoin('specialities', 'specialities.id', '=', 'student_specialities.speciality_id')
                     ->leftJoin('students_account_seeders', 'students_account_seeders.id', '=', 'student_specialities.student_id')
+                    ->where('year_scholar_id', $cred['yearId'])
                     ->where('code', $worksheet->getCell('A' . $row)->getValue())
                     ->get()->first()
             ) {
-                $data = [
-                    'student_specialite_id' => $student_speciality_id->id,
-                    'ms1' => $worksheet->getCell('B' . $row)->getValue(),
-                    'ms2' => $worksheet->getCell('C' . $row)->getValue(),
-                    'mgc' => $worksheet->getCell('D' . $row)->getValue(),
-                    'observation' => $worksheet->getCell('E' . $row)->getValue(),
-                ];
-            }
-            try {
 
-                \DB::table('ranks')->insert($data);
+                $rank = Rank::select()->where('student_specialite_id', $student_speciality_id->id)->get()->first();
 
-            } catch (\Throwable $th) {
-                continue;
+                if ($rank == null) {
+                    try {
+                        Rank::create([
+                            'student_specialite_id' => $student_speciality_id->id,
+                            'ms1' => $worksheet->getCell('B' . $row)->getValue(),
+                            'ms2' => $worksheet->getCell('C' . $row)->getValue(),
+                            'mgc' => $worksheet->getCell('D' . $row)->getValue(),
+                            'observation' => $worksheet->getCell('E' . $row)->getValue(),
+                        ]);
+                    } catch (\Throwable $th) {
+                        continue;
+                    }
+                }
             }
+
 
         }
     }
@@ -128,6 +133,7 @@ class RankConroller extends Controller
             $student_speciality_id = Student_speciality::select('student_specialities.id')
                 ->leftJoin('specialities', 'specialities.id', '=', 'student_specialities.speciality_id')
                 ->leftJoin('students_account_seeders', 'students_account_seeders.id', '=', 'student_specialities.student_id')
+                ->where('year_scholar_id', $credentials['yearId'])
                 ->where('code', $credentials['code'])
                 ->get()->first()
         ) {

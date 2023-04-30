@@ -15,6 +15,7 @@ use App\Models\Teacher;
 use App\Models\Team;
 use App\Models\TeamRoom;
 use App\Models\Theme;
+use App\Models\Year_scholar;
 use App\Notifications\EmailVerificationNotification;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -28,10 +29,12 @@ class sessionStudentController extends Controller
 
     public function getStudentInfo(Request $request)
     {
-
         $role = "student";
+
         $user = $request->user('student');
+
         return response(compact('user', 'role'));
+
 
     }
     public function updateStudentInfo(StudentupdateInfoRequest $request)
@@ -40,9 +43,6 @@ class sessionStudentController extends Controller
 
         $student = Auth::guard('student')->user();
         $logged = Students_Account_Seeder::select('logged')->where('code', $student->code)->get()->first()['logged'];
-
-
-
 
         if (!$logged) {
 
@@ -58,7 +58,7 @@ class sessionStudentController extends Controller
                 ]);
 
 
-                $student->notify(new EmailVerificationNotification);
+                // $student->notify(new EmailVerificationNotification);
 
 
 
@@ -87,31 +87,108 @@ class sessionStudentController extends Controller
         }
     }
 
-    public function getRanking(Request $request)
+
+    public function getInscriptions(Request $request)
+    {
+
+        $student = $request->user('student');
+
+        $getStudent_specialties = Student_speciality::select()
+            ->where('student_id', $student->id)
+            // ->groupBy('speciality_id', 'id')
+            ->get()
+        ;
+
+        $response = [];
+
+        foreach ($getStudent_specialties as $inscription) {
+
+            $response[] = Specialitie::select(
+                'fullname',
+                'student_specialities.id  as value',
+                \DB::raw("CONCAT(start_date, ' - ', end_date) AS label"),
+
+            )
+                ->leftJoin('student_specialities', 'specialities.id', '=', 'student_specialities.speciality_id')
+                ->leftJoin('year_scholars', 'year_scholars.id', '=', 'year_scholar_id')
+                ->where('specialities.id', $inscription->speciality_id)
+                ->where('year_scholar_id', $inscription->year_scholar_id)
+                ->where('student_id', $student->id)
+                ->get();
+
+        }
+
+
+        $newArray = [];
+
+        foreach ($response as $item) {
+            $label = $item[0]['fullname'];
+            $link = [];
+            foreach ($item as $val) {
+                unset($val['fullname']);
+                $link[] = $val;
+            }
+            if (isset($newArray[$label])) {
+                $newArray[$label]['links'][] = $link[0];
+            } else {
+                $newArray[$label] = [
+                    'label' => $label,
+                    'links' => $link
+                ];
+            }
+        }
+
+        $newArray = array_values($newArray);
+
+
+        return $newArray;
+
+
+
+
+
+
+    }
+
+
+
+
+
+    public function getRanking(Request $request, $studentSpecialtyId)
     {
         $student = $request->user('student');
 
-        $getStudent_speciality_id = Student_speciality::get()->where('student_id', $student->id)->first()->speciality_id;
+        $year_scholar_id = Student_speciality::get()->where('id', $studentSpecialtyId)->first()->year_scholar_id;
 
-        $get_Speciality_name = Specialitie::get()->where('id', $getStudent_speciality_id)->first()->fullname;
+
+        $SpecialtyId = Student_speciality::get()->where('id', $studentSpecialtyId)->first()->speciality_id;
+
+
+        $year_scholar_String = Year_scholar::select(
+            \DB::raw("CONCAT(start_date, ' - ', end_date) AS yearScholar"),
+        )->where('id', $year_scholar_id)->get()->first();
+
+
+
+        $get_Speciality_name = Specialitie::get()->where('id', $SpecialtyId)->first()->fullname;
 
         $this_year = date('Y');
-
 
         $studentRanks = Students_Account_Seeder::
             select('students_account_seeders.code', 'students_account_seeders.name AS student_name', 'ranks.ms1', 'ranks.ms2', 'ranks.mgc', 'observation')
             ->join('student_specialities', 'students_account_seeders.id', '=', 'student_specialities.student_id')
             ->join('specialities', 'student_specialities.speciality_id', '=', 'specialities.id')
             ->join('ranks', 'student_specialities.id', '=', 'ranks.student_specialite_id')
-            ->where('students_account_seeders.year_scholar', $this_year)
-            ->where('student_specialities.speciality_id', $getStudent_speciality_id)
-            ->groupBy('specialities.id', 'students_account_seeders.id', 'students_account_seeders.name', 'ranks.ms1', 'ranks.ms2', 'ranks.mgc', 'specialities.fullname', 'students_account_seeders.year_scholar', 'observation', 'students_account_seeders.code')
+            ->join('year_scholars', 'student_specialities.year_scholar_id', '=', 'year_scholars.id')
+            ->where('year_scholars.id', $year_scholar_id)
+            ->where('student_specialities.speciality_id', $SpecialtyId)
+            ->groupBy('specialities.id', 'students_account_seeders.id', 'students_account_seeders.name', 'ranks.ms1', 'ranks.ms2', 'ranks.mgc', 'specialities.fullname', 'observation', 'students_account_seeders.code')
             ->orderBy('ranks.mgc', 'desc')
             ->get();
 
         $response = [
             'speciality_name' => $get_Speciality_name,
-            'year_scholar' => $this_year,
+            'year_scholar' => $year_scholar_String->yearScholar,
             'student_rank' => $studentRanks,
         ];
 
@@ -139,66 +216,98 @@ class sessionStudentController extends Controller
 
         // return response(compact('receiverId', 'senderId'),200)  ;
         // // try {
-        $reciever_speciality = Student_speciality::get()->where('student_id', $receiver->id)->where('year_scholar', $this_year)->first()->speciality_id;
-        $sender_speciality = Student_speciality::get()->where('student_id', $sender->id)->where('year_scholar', $this_year)->first()->speciality_id;
+
+        $sender_inscription = \DB::table('year_scholars AS ys')
+            ->join('student_specialities AS ss', 'ys.id', '=', 'ss.year_scholar_id')
+            ->select('ys.id AS year_id', 'ss.id', 'ss.speciality_id', 'ys.end_date')
+            ->where('ss.student_id', $sender->id)
+            ->orderBy('ys.end_date', 'DESC')
+            ->limit(1)
+            ->get()->first();
 
 
-        if ($reciever_speciality != $sender_speciality) {
-            return response('hello 1', 403);
+        $receiver_inscription = \DB::table('year_scholars AS ys')
+            ->join('student_specialities AS ss', 'ys.id', '=', 'ss.year_scholar_id')
+            ->select('ys.id AS year_id', 'ss.id', 'ss.speciality_id', 'ys.end_date')
+            ->where('ss.student_id', $receiver->id)
+            ->orderBy('ys.end_date', 'DESC')
+            ->limit(1)
+            ->get()->first();
+
+
+        // $receiver_speciality = Student_speciality::get()->where('student_id', $receiver->id)->where('year_scholar', $this_year)->first()->speciality_id;
+        // $sender_speciality = Student_speciality::get()->where('student_id', $sender->id)->where('year_scholar', $this_year)->first()->speciality_id;
+
+
+        if ($sender_inscription->year_id != $receiver_inscription->year_id) {
+            return response('two deferent years', 403);
         }
-
-        // ! check that the inviter are alredy in team or alredy send the invitation
-
-        $checkIfRecieverAreAlredyInTeam = \DB::table('invitations')
-            ->where('receiver_id', $receiver->id)
-            ->where('isAccepted', 1)
-            ->exists();
-
-        $checkIfSenderAreAlredyInTeam = \DB::table('invitations')
-            ->where('sender_id', $sender->id)
-            ->where('isAccepted', 1)
-            ->exists();
-
-        try { // !! check if the students is already in team
-            $receiverId = $receiver->id;
-
-
-
-            $students = Team::select('member_1', 'member_2')
-                ->where('member_1', $receiverId)
-                ->orWhere('member_2', $receiverId)->get()->first();
-
-            $students_ids = [$students->member_1, $students->member_2];
-
-
-            if (count($students_ids) > 0) {
-                $checkIfRecieverAreAlredyInTeam = true;
-            }
-        } catch (ErrorException $th) {
-            $checkIfRecieverAreAlredyInTeam = false;
+        if ($sender_inscription->speciality_id != $receiver_inscription->speciality_id) {
+            return response('two deferent specialties', 403);
         }
 
 
-        $checkIfInvitationIsAlredyExist = \DB::table('invitations')
+        // ! check that the inviter are already in team or already send the invitation
+
+        // return $sender_inscription->year_id ;
+
+        $receiverId = $receiver->id ;
+        $senderId = $sender->id ;
+
+        $checkIfReceiverAreAlreadyInTeam = \DB::table('teams')
+            ->where('year_scholar_id', $receiver_inscription->year_id)
+            // ->where('member_1', $receiver->id)
+            // ->orWhere('member_2', $receiver->id)
+            ->where(function ($query) use ($receiverId) {
+                $query->where('member_1', $receiverId)
+                    ->orWhere('member_2', $receiverId);
+            })
+            ->exists()
+        ;
+
+        $checkIfSenderAreAlreadyInTeam = \DB::table('teams')
+            ->where('year_scholar_id', $sender_inscription->year_id)
+            ->where(function ($query) use ($senderId) {
+                $query->where('member_1', $senderId)
+                    ->orWhere('member_2', $senderId);
+            })
+            ->exists()
+        ;
+
+        // !! check if the students is already in team
+
+        $checkIfInvitationIsAlreadyExist = \DB::table('invitations')
             ->where('sender_id', $sender->id)
             ->where('receiver_id', $receiver->id)
             ->where('isAccepted', 0)
-            ->exists();
+            ->exists()
+            ||
+            \DB::table('invitations')
+                ->where('receiver_id', $sender->id)
+                ->where('sender_id', $receiver->id)
+                ->where('isAccepted', 0)
+                ->exists()
+        ;
 
-        if ($checkIfInvitationIsAlredyExist || $checkIfSenderAreAlredyInTeam || $checkIfRecieverAreAlredyInTeam) {
-            // !! devloping response test
-            return response([$checkIfInvitationIsAlredyExist, $checkIfSenderAreAlredyInTeam, $checkIfRecieverAreAlredyInTeam], 403);
+        if ($checkIfInvitationIsAlreadyExist || $checkIfSenderAreAlreadyInTeam || $checkIfReceiverAreAlreadyInTeam) {
+            // !! developing response test
+            return response([
+                'InvitationIsAlreadyExist' => $checkIfInvitationIsAlreadyExist,
+                'senderAreAlreadyInTeam' => $checkIfSenderAreAlreadyInTeam,
+                'receiverAreAlreadyInTeam' => $checkIfReceiverAreAlreadyInTeam
+            ], 403);
+
         }
-
         Invitation::create([
             'sender_id' => $sender->id,
             'receiver_id' => $receiver->id,
             'isAccepted' => 0,
         ]);
 
-        return response('seccess', 200);
+        return response('success', 200);
 
 
+        // }
     }
     public function getRecievedInvitation(Request $request)
     {
@@ -248,10 +357,12 @@ class sessionStudentController extends Controller
             ->where('sender_id', $sender_id)
             ->where('receiver_id', $receiver_id)
             ->exists();
+
         $checkInvition_sm = \DB::table('invitations')
             ->where('sender_id', $receiver_id)
             ->where('receiver_id', $sender_id)
             ->exists();
+
         if (!$checkInvition && !$checkInvition_sm) {
             return response('invitation are not exist', 403);
         }
@@ -268,23 +379,44 @@ class sessionStudentController extends Controller
             // ! refuse the rest of invitation in accepte one
             \DB::update('update invitations  set isAccepted = -1 where ( receiver_id  = ? or  receiver_id  = ?)   or  (sender_id  = ? or  sender_id  = ?)', [$receiver_id, $sender_id, $receiver_id, $sender_id]);
 
-            $invitation->update(["isAccepted" => 1]);
 
-            Invitation::create([
-                'sender_id' => $receiver_id,
-                'receiver_id' => $sender_id,
-                'isAccepted' => 1,
-            ]);
+            // Invitation::create([
+            //     'sender_id' => $receiver_id,
+            //     'receiver_id' => $sender_id,
+            //     'isAccepted' => 1,
+            // ]);
 
             // * create team
 
-            $team = Team::create([
-                'member_1' => $sender_id,
-                'member_2' => $receiver_id,
-            ]);
+            $receiver_inscription = \DB::table('year_scholars AS ys')
+                ->join('student_specialities AS ss', 'ys.id', '=', 'ss.year_scholar_id')
+                ->select('ys.id AS year_id', 'ss.id', 'ss.speciality_id', 'ys.end_date')
+                ->where('ss.student_id', $receiver_id)
+                ->orderBy('ys.end_date', 'DESC')
+                ->limit(1)
+                ->get()
+                ->first();
+
+
+            if (
+                $team = Team::create([
+                    'member_1' => $sender_id,
+                    'member_2' => $receiver_id,
+                    'year_scholar_id' => $receiver_inscription->year_id
+                ])
+            ) {
+
+                $invitation->update(["isAccepted" => 1]);
+                Invitation::
+                    where('sender_id', $receiver_id)->delete();
+                Invitation::
+                    where('sender_id', $sender_id)->delete();
+            }
+
+
 
             //             Chat room name: Project Partners
-// Description: Working on a final project can be overwhelming, but you don't have to do it alone. Join Project Partners to find a study partner who can help you stay accountable and motivated as you work towards completing your project. Share your goals, get feedback, and celebrate your successes together.
+            // Description: Working on a final project can be overwhelming, but you don't have to do it alone. Join Project Partners to find a study partner who can help you stay accountable and motivated as you work towards completing your project. Share your goals, get feedback, and celebrate your successes together.
 
             // * create first room
             TeamRoom::create([
@@ -292,12 +424,12 @@ class sessionStudentController extends Controller
                 'room_name' => 'Project Partners',
                 'discription'
                 => "Working on a final project can be overwhelming, but you don't have to do it alone. Join Project Partners to find a study partner who can help you stay accountable and motivated as you work towards completing your project. Share your goals, get feedback, and celebrate your successes together.:",
-                'creater_id' => 4 ,
+                'creater_id' => 4,
             ]);
 
             return response('accepted', 201);
             // !-------------------------------------------------------------------------------------------------------------------------------------------------------------
-// * check if reciver refuse  the invitation
+// * check if receiver refuse  the invitation
 
         } else if ($request['actionValue'] == -1) {
 
@@ -315,8 +447,6 @@ class sessionStudentController extends Controller
                 ->where('isAccepted', 0)
                 ->first();
             if ($invitation_exist) {
-
-
                 $invitation->update(["isAccepted" => -1]);
                 // return response('refused', 201);
             }
@@ -327,25 +457,25 @@ class sessionStudentController extends Controller
 // * cancel the invitation
 
 
-            $invitation_symitrique_exist = \DB::table('invitations')
+            $invitation_symmetric_exist = \DB::table('invitations')
                 ->where('sender_id', $receiver_id)
                 ->where('receiver_id', $sender_id)
                 ->where('isAccepted', 0)
                 ->exists();
 
 
-            if ($invitation_symitrique_exist) {
-                $invitation_symitrique = Invitation::get()
+            if ($invitation_symmetric_exist) {
+                $invitation_symmetric = Invitation::get()
                     ->where('sender_id', $receiver_id)
                     ->where('receiver_id', $sender_id)
                     ->where('isAccepted', 0)
                     ->first();
-                $invitation_symitrique->update(["isAccepted" => -1]);
+                $invitation_symmetric->update(["isAccepted" => -1]);
                 // return response('invitation cancled', 201);
             }
 
 
-            return response('invitation cancled', 201);
+            return response('invitation canceled', 201);
 
 
 
@@ -367,6 +497,16 @@ class sessionStudentController extends Controller
         //  ! retrive members ids from Team
 
         $studentId = $student->id;
+
+        $student_inscription = \DB::table('year_scholars AS ys')
+            ->join('student_specialities AS ss', 'ys.id', '=', 'ss.year_scholar_id')
+            ->select('ys.id AS year_id', 'ss.id', 'ss.speciality_id', 'ys.end_date')
+            ->where('ss.student_id', $studentId)
+            ->orderBy('ys.end_date', 'DESC')
+            ->limit(1)
+            ->get()
+            ->first();
+
         try {
 
             // $students = Team::whereExists(function ($query) use ($studentId) {
@@ -375,9 +515,23 @@ class sessionStudentController extends Controller
             //         ->whereRaw("JSON_CONTAINS(team_member, '$studentId')");
             // })->get()->first();
 
-            $students = Team::select('member_1', 'member_2', 'supervisor_id', 'theme_id')
-                ->where('member_1', $studentId)
-                ->orWhere('member_2', $studentId)->get()->first();
+            // $students = Team::select('member_1', 'member_2', 'supervisor_id', 'theme_id')
+            //     ->where('year_scholar_id', $student_inscription->year_id)
+            //     ->where('member_1', $studentId)
+            //     ->orWhere('member_2', $studentId)
+            //     ->get()
+            //     ->first();
+
+                $students = Team::select('member_1', 'member_2', 'supervisor_id', 'theme_id')
+                ->where('year_scholar_id', $student_inscription->year_id)
+                ->where(function ($query) use ($studentId) {
+                    $query->where('member_1', $studentId)
+                          ->orWhere('member_2', $studentId);
+                })
+                ->get()
+                ->first();
+
+
 
             $students_ids = [$students->member_1, $students->member_2];
 

@@ -9,10 +9,13 @@ class Students_Account_Seeder extends Model
 {
     use HasFactory;
 
-        protected  $table = 'students_account_seeders' ;
+    protected $table = 'students_account_seeders';
 
-        protected $fillable = [
-            'code', 'name', 'default_password','specialty_id'
-        ] ; 
+    protected $fillable = [
+        'code',
+        'name',
+        'default_password',
+        'specialty_id'
+    ];
 
 }

@@ -24,6 +24,7 @@ class addRankByStudent extends FormRequest
     public function rules()
     {
         return [
+            'yearId' => 'numeric|required',
             'code' => 'numeric|required',
             'ms1' => 'numeric|min:0|max:20|required',
             'ms2' => 'numeric|min:0|max:20|required',

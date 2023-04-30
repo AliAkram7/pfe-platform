@@ -114,8 +114,18 @@ class ThemeController extends Controller
         //     fclose($fp);
         // }
 
+
+        $new_inscription = \DB::table('year_scholars')
+            ->select('id AS year_id')
+            ->orderByDesc('end_date')
+            ->limit(1)
+            ->get()->first();
+
+
+
         $teams = Team::select('teams.id')
             ->join('student_specialities', 'student_specialities.student_id', '=', 'teams.member_1')
+            ->where('teams.year_scholar_id', $new_inscription->year_id)
             ->where('speciality_id', $specialty_id)
             ->orderBy('teams.id')
             ->get();
@@ -218,8 +228,25 @@ class ThemeController extends Controller
         $student = $request->user('student');
 
         $specialty_id = Student_speciality::select('*')->where('student_id', $student->id)->get()->first()->speciality_id;
+        $studentId = $student->id;
+        $student_inscription = \DB::table('year_scholars AS ys')
+            ->join('student_specialities AS ss', 'ys.id', '=', 'ss.year_scholar_id')
+            ->select('ys.id AS year_id', 'ss.id', 'ss.speciality_id', 'ys.end_date')
+            ->where('ss.student_id', $student->id)
+            ->orderBy('ys.end_date', 'DESC')
+            ->limit(1)
+            ->get()
+            ->first();
 
-        $team = Team::where('member_1', $student->id)->orWhere('member_2', $student->id)->get('choice_list')->first();
+
+
+        $team = Team::
+            where('year_scholar_id', $student_inscription->year_id)
+            ->where(function ($query) use ($studentId) {
+                $query->where('member_1', $studentId)
+                    ->orWhere('member_2', $studentId);
+            })
+            ->get('choice_list')->first();
 
         $array_of_themes_ids = json_decode($team->choice_list);
 
@@ -288,9 +315,23 @@ class ThemeController extends Controller
 
             // return $student /;
 
+            $student_inscription = \DB::table('year_scholars AS ys')
+                ->join('student_specialities AS ss', 'ys.id', '=', 'ss.year_scholar_id')
+                ->select('ys.id AS year_id', 'ss.id', 'ss.speciality_id', 'ys.end_date')
+                ->where('ss.student_id', $student)
+                ->orderBy('ys.end_date', 'DESC')
+                ->limit(1)
+                ->get()
+                ->first();
+
             $team_info = Team::select('id', 'member_1', 'member_2', 'choice_list')
-                ->where('member_1', $student)
-                ->orWhere('member_2', $student)->get()->first();
+
+                ->where('year_scholar_id', $student_inscription->year_id)
+                ->where(function ($query) use ($student) {
+                    $query->where('member_1', $student)
+                        ->orWhere('member_2', $student);
+                })
+                ->get()->first();
 
             if (in_array($student, $student_black_list)) {
                 echo "student $student  in team  $team_info->id  blacklisted\n";

@@ -32,7 +32,7 @@ class SpecialtyManagerContoller extends Controller
 
     }
 
-    public function getRanking(Request $request)
+    public function getRanking(Request $request, $year_id)
     {
         $teacher = $request->user('teacher');
 
@@ -48,9 +48,9 @@ class SpecialtyManagerContoller extends Controller
             ->join('student_specialities', 'students_account_seeders.id', '=', 'student_specialities.student_id')
             ->join('specialities', 'student_specialities.speciality_id', '=', 'specialities.id')
             ->join('ranks', 'student_specialities.id', '=', 'ranks.student_specialite_id')
-            ->where('students_account_seeders.year_scholar', $this_year)
+            ->where('student_specialities.year_scholar_id', $year_id)
             ->where('student_specialities.speciality_id', $specialty_id)
-            ->groupBy('specialities.id', 'students_account_seeders.id', 'students_account_seeders.name', 'ranks.ms1', 'ranks.ms2', 'ranks.mgc', 'specialities.fullname', 'students_account_seeders.year_scholar', 'observation', 'students_account_seeders.code')
+            ->groupBy('specialities.id', 'students_account_seeders.id', 'students_account_seeders.name', 'ranks.ms1', 'ranks.ms2', 'ranks.mgc', 'specialities.fullname', 'observation', 'students_account_seeders.code')
             ->orderBy('ranks.mgc', 'desc')
             ->get();
 
@@ -64,7 +64,7 @@ class SpecialtyManagerContoller extends Controller
 
     //* Teams management
 
-    public function fetchTeams(Request $request)
+    public function fetchTeams(Request $request, $selectedYearId)
     {
 
         // ** fetch all teams that one of the member is in specialty of the specialty manager
@@ -75,22 +75,30 @@ class SpecialtyManagerContoller extends Controller
         $specialty_id = Teacher_specialty_manager::get()->where('teacher_id', $teacher->id)->first()->specialty_id;
 
         $teams = \DB::table('teams')
-            ->join('students_account_seeders as s', function ($join) {
+            ->leftJoin('students_account_seeders as s', function ($join) {
                 $join->on('teams.member_1', '=', 's.id')
                     ->orWhere('teams.member_2', '=', 's.id');
             })
-            ->join('student_specialities as ss', 's.id', '=', 'ss.student_id')
-            ->join('specialities as sp', 'ss.speciality_id', '=', 'sp.id')
-            ->where('sp.id', '=', $specialty_id)
+            ->leftJoin('student_specialities as ss', 's.id', '=', 'ss.student_id')
+            ->leftJoin('year_scholars as ys', 'ys.id', '=', 'ss.year_scholar_id')
+            ->leftJoin('specialities as sp', 'ss.speciality_id', '=', 'sp.id')
             ->select(
                 'teams.id',
+                'teams.year_scholar_id',
                 'member_1',
                 'member_2',
                 'supervisor_id',
                 'choice_list',
                 'theme_id',
             )
-            ->get();
+            ->where('teams.year_scholar_id', $selectedYearId)
+            ->where('sp.id', '=', $specialty_id)
+            ->distinct()
+            ->get()
+
+        ;
+
+        // return $teams;
 
         // return $teams ;
         $response = [];

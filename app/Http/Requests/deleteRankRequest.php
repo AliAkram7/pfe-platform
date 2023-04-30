@@ -24,6 +24,7 @@ class deleteRankRequest extends FormRequest
     public function rules()
     {
         return [
+            'yearId' => 'numeric|required',
             'code' => 'numeric|exists:students_account_seeders,code'
         ];
     }

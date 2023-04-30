@@ -25,7 +25,6 @@ class invitRequest extends FormRequest
     {
         return [
                 'code' =>'required|exists:students,code'
-                
         ];
     }
 }
