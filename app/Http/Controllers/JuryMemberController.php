@@ -11,7 +11,7 @@ use Nette\Utils\Strings;
 
 class JuryMemberController extends Controller
 {
-    public function fetchTeachers(Request $request)
+    public function fetchTeachers(Request $request, $supervisor_code)
     {
         $teacher = $request->user('teacher');
         $specialty_managed_id = Teacher_specialty_manager::select('specialty_id')->where('teacher_id', $teacher->id)->get()->first()->specialty_id;
@@ -24,11 +24,12 @@ class JuryMemberController extends Controller
                 'teachers.id',
                 \DB::raw("CONCAT('teacher: ',name, ', code : ', code) AS label"),
                 'code AS value',
-                \DB::raw("CONCAT('[', GROUP_CONCAT(CASE WHEN research_foci.id IS NULL OR research_foci.Axes_and_themes_of_recherche IS NULL THEN '' ELSE JSON_OBJECT('label', COALESCE(research_foci.Axes_and_themes_of_recherche, '')) END), ']') AS Axes_and_themes_of_recherche")
+                \DB::raw("CONCAT('[',GROUP_CONCAT(CASE WHEN research_foci.id IS NULL OR research_foci.Axes_and_themes_of_recherche IS NULL THEN '' ELSE JSON_OBJECT('label', COALESCE(research_foci.Axes_and_themes_of_recherche, '')) END), ']') AS Axes_and_themes_of_recherche")
 
                 // \DB::raw(' false as  disabled'),
                 // \DB::raw("CASE WHEN jury_members.specialty_id = $specialty_managed_id THEN group_number ELSE NULL END AS group_number")
             )
+            ->where('teachers.code','!=',$supervisor_code)
             ->groupBy(
                 'teachers.id',
                 'label',

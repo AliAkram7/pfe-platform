@@ -17,6 +17,7 @@ use App\Models\Teacher_specialty_manager;
 use App\Models\Team;
 use App\Models\TeamRoom;
 use App\Models\Theme;
+use App\Models\Year_scholar;
 use Dotenv\Dotenv;
 use Illuminate\Http\Request;
 use Dotenv\Loader;
@@ -130,12 +131,25 @@ class ThemeController extends Controller
             ->orderBy('teams.id')
             ->get();
 
+
+        $last_year = \DB::table('year_scholars')
+            ->select()
+            ->orderByDesc('end_date')
+            ->limit(1)
+            ->get()->first();
+
+        $year_end = Year_scholar::select()->where('id', $last_year->id)->get()->first()->end_date;
+        $year_start = Year_scholar::select()->where('id', $last_year->id)->get()->first()->start_date;
+
         foreach ($teams as $team) {
 
 
             $matchingThemes = Theme::where('specialty_id', $specialty_id)
                 ->where('specialty_manager_validation', true)
+                ->whereYear('themes.created_at', '<=', $year_end)
+                ->whereYear('themes.created_at', '>=', $year_start)
                 ->pluck('id')
+
                 ->toArray();
 
             $team->choice_list = json_encode($matchingThemes);
@@ -146,12 +160,17 @@ class ThemeController extends Controller
 
     }
 
-    public function fetchSuggestedTheme(Request $request)
+    public function fetchSuggestedTheme(Request $request, $yearId)
     {
         $teacher = $request->user('teacher');
 
 
         $specialty_id = Teacher_specialty_manager::get()->where('teacher_id', $teacher->id)->first()->specialty_id;
+
+
+        $year_end = Year_scholar::select()->where('id', $yearId)->get()->first()->end_date;
+        $year_start = Year_scholar::select()->where('id', $yearId)->get()->first()->start_date;
+
 
         $themes_info = Theme::select(
             'themes.id',
@@ -164,7 +183,10 @@ class ThemeController extends Controller
             'specialty_manager_validation',
             'teachers.name',
             'themes.created_at'
-        )->where('specialty_id', $specialty_id)
+        )
+            ->where('specialty_id', $specialty_id)
+            ->whereYear('themes.created_at', '<=', $year_end)
+            ->whereYear('themes.created_at', '>=', $year_start)
             ->join('teachers', 'teachers.id', '=', 'themes.teacher_id')
             ->get();
 

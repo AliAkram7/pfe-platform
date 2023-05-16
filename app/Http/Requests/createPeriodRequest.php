@@ -24,7 +24,7 @@ class createPeriodRequest extends FormRequest
     public function rules()
     {
         return [
-            // 'nPeriod' => 'required' ,
+            'nPeriod' => 'required' ,
             'selectedYearId' => 'required',
             'start_date' => 'required',
             'end_date' => 'required'

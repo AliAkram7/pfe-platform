@@ -118,7 +118,7 @@ Route::group(['middleware' => ['teacher.guard:teacher']], function () {
 
     Route::get('/teacher/specialty_manager/fetchSpecialtyInfo', [SpecialtyManagerContoller::class, 'fetchSpecialtyInfo']);
 
-    Route::get('/teacher/specialty_manager/fetchSuggestedTheme', [ThemeController::class, 'fetchSuggestedTheme']);
+    Route::get('/teacher/specialty_manager/fetchSuggestedTheme/{yearId}', [ThemeController::class, 'fetchSuggestedTheme']);
 
     Route::post('/teacher/specialty_manager/publishTheListOfThemes', [ThemeController::class, 'publishTheListOfThemes']);
 
@@ -169,7 +169,7 @@ Route::group(['middleware' => ['teacher.guard:teacher']], function () {
     Route::post('/teacher/createAppointment', [sessionTeacherController::class, 'createAppointment']);
 
     // fetchTeachers
-    Route::get('/teacher/specialty_manager/fetchTeachers', [JuryMemberController::class, 'fetchTeachers']);
+    Route::get('/teacher/specialty_manager/fetchTeachers/{supervisor_code}', [JuryMemberController::class, 'fetchTeachers']);
 
     Route::post('/teacher/specialty_manager/sendListOfLicenseJury', [JuryMemberController::class, 'sendListOfLicenseJury']);
 
@@ -213,6 +213,12 @@ Route::group(['middleware' => ['admin.guard:admin']], function () {
     Route::post('/teacher/department_manager/unLockAccount', [DepartmentManagerController::class, 'unLockAccount']);
 
     Route::post('/teacher/department_manager/deleteAccount', [DepartmentManagerController::class, 'deleteAccount']);
+
+
+    Route::post('/teacher/department_manager/deleteInscription', [DepartmentManagerController::class, 'deleteInscription']);
+
+
+
 
     Route::post('/teacher/department_manager/resetStudentAccount', [DepartmentManagerController::class, 'resetStudentAccount']);
 

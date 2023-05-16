@@ -24,7 +24,7 @@ class PeriodController extends Controller
         $specialty_id = Teacher_specialty_manager::get()->where('teacher_id', $teacher->id)->first()->specialty_id;
 
 
-        
+
 
         $teams = \DB::table('teams')
             ->join('students_account_seeders as s', function ($join) {
@@ -32,27 +32,26 @@ class PeriodController extends Controller
                     ->orWhere('teams.member_2', '=', 's.id');
             })
             ->join('student_specialities as ss', 's.id', '=', 'ss.student_id')
-            ->join('student_specialities as ss', 's.id', '=', 'ss.student_id')
+            // ->join('student_specialities as ss', 's.id', '=', 'ss.student_id')
             ->join('specialities as sp', 'ss.speciality_id', '=', 'sp.id')
-            ->join('year_scholars as ys', 'ys.id', '=', 'sp.year_scholar_id')
+            ->join('year_scholars as ys', 'ys.id', '=', 'ss.year_scholar_id')
             ->where('teams.year_scholar_id', $credentials['selectedYearId'])
             ->where('sp.id', '=', $specialty_id)
             ->select('teams.id')
-            ->get()
             ->distinct()
+            ->get()
         ;
 
-        return $teams;
 
-        try {
+        // try {
             $period = Period::create([
                 "num_period" => $credentials['nPeriod'],
                 "start_date" => $credentials['start_date'],
                 "end_date" => $credentials['end_date'],
             ]);
-        } catch (\Throwable $th) {
-            return response("error in create period", 403);
-        }
+        // } catch (\Throwable $th) {
+        //     return response("error in create period", 403);
+        // }
         foreach ($teams as $team) {
             if (
                 Follow_teams::create([

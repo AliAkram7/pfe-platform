@@ -134,7 +134,7 @@ class TeamsController extends Controller
             ->get()->first();
 
 
-        $Teams = Team::select('member_1', 'member_2', 'id')
+        $Teams = Team::select('member_1', 'member_2', 'teams.id')
             ->where('supervisor_id', $teacher_id)
             ->where('year_scholar_id', $new_inscription->year_id)
             ->get();
@@ -147,7 +147,7 @@ class TeamsController extends Controller
             $member_ids = [$team->member_1, $team->member_2];
 
             foreach ($member_ids as $member_id) {
-                $student_info = Student::find($member_id);
+                $student_info = Students_Account_Seeder::find($member_id);
                 $student_resource_info = $student_info;
                 if ($student_resource_info) {
                     $team_info[] = $student_resource_info;

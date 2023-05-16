@@ -77,7 +77,7 @@ class SpecialtyManagerContoller extends Controller
         $teams = \DB::table('teams')
             ->leftJoin('students_account_seeders as s', function ($join) {
                 $join->on('teams.member_1', '=', 's.id')
-                    ->orWhere('teams.member_2', '=', 's.id');
+                    ->orOn('teams.member_2', '=', 's.id');
             })
             ->leftJoin('student_specialities as ss', 's.id', '=', 'ss.student_id')
             ->leftJoin('year_scholars as ys', 'ys.id', '=', 'ss.year_scholar_id')
@@ -106,7 +106,7 @@ class SpecialtyManagerContoller extends Controller
         foreach ($teams as $team) {
 
             $supervisor_info = Teacher::
-                select('name', 'institutional_email', 'abbreviated_name', 'fullname')
+                select('name', 'institutional_email', 'abbreviated_name', 'fullname', "teachers.code AS  teacher_code")
                 ->leftJoin('grades', 'teachers.grade_id', '=', 'grades.id')
                 ->leftJoin('teams', 'teams.supervisor_id', '=', 'teachers.id')
                 ->where('supervisor_id', $team->supervisor_id)

@@ -15,7 +15,7 @@ class Students_Account_Seeder extends Model
         'code',
         'name',
         'default_password',
-        'specialty_id'
+        // 'specialty_id'
     ];
 
 }

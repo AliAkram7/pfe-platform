@@ -101,7 +101,7 @@ class DepartmentManagerController extends Controller
 
         $highestRow = $worksheet->getHighestRow();
 
-        for ($row = 2; $row < $highestRow; $row++) {
+        for ($row = 2; $row <= $highestRow; $row++) {
 
             $student = Students_Account_Seeder::select()->where('code', $worksheet->getCell('A' . $row)->getValue())->get()->first();
 
@@ -115,13 +115,20 @@ class DepartmentManagerController extends Controller
                         ]
                     )
                 ) {
-                    Student_speciality::create(
-                        [
-                            'student_id' => $user->id,
-                            'speciality_id' => $cred['specialty_id'],
-                            'year_scholar_id' => $cred['yearId']
-                        ]
-                    );
+
+                    try {
+                        Student_speciality::create(
+                            [
+                                'student_id' => $user->id,
+                                'speciality_id' => $cred['specialty_id'],
+                                'year_scholar_id' => $cred['yearId']
+                            ]
+                        );
+                    } catch (\Throwable $th) {
+                        continue;
+                    }
+
+
                 }
             } else {
                 Student_speciality::create(
@@ -204,9 +211,31 @@ class DepartmentManagerController extends Controller
     public function deleteAccount(udStudentRequest $request)
     {
         $cred = $request->validated();
+
         Student::where('code', $cred['code'])->delete();
         Students_Account_Seeder::where('code', $cred['code'])->delete();
+
         return response('account deleted', 201);
+    }
+
+    public function deleteInscription(udStudentRequest $request){
+        $cred = $request->validated();
+
+        $student = Students_Account_Seeder::where('code', $cred['code'])->get()->first();
+
+        // try {
+
+            Student_speciality::where('student_id', $student->id)->where('year_scholar_id', $cred['yearId'])->delete();
+
+
+            return response('account deleted', 201);
+        // } catch (\Throwable $th) {
+
+            return response('Error : account not deleted for some reason', 403);
+        // }
+
+
+
     }
 
     // ! reset account

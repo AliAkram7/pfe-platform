@@ -273,7 +273,10 @@ class sessionTeacherController extends Controller
                 'creater_id' => 3,
                 'room_name' => "Hello students,",
                 'discription' => "I hope this message finds you well. I just wanted to remind you that we have an important appointment scheduled for "
-                . $formattedDate,
+                . $formattedDate."\n"
+                ."observation : " .$credentials['observation']
+
+                ,
             ]);
         }
 
