@@ -118,23 +118,26 @@ class PresentationController extends Controller
         $allSpecialties = [];
         $specialtyAffectation = [];
 
+        $new_inscription = \DB::table('year_scholars')
+        ->select('id AS year_id')
+        ->orderByDesc('end_date')
+        ->limit(1)
+        ->get()->first();
+
         foreach ($specialties as $specialty) {
 
             $min_date = strtotime('9999-12-31');
-
-
 
             $response = [];
 
             if (
                 $teams = \DB::table('teams')
-                    ->join('students_account_seeders as s', function ($join) {
-                        $join->on('teams.member_1', '=', 's.id')
-                            ->orWhere('teams.member_2', '=', 's.id');
-                    })
+                    ->join('students_account_seeders as s', 'teams.member_1', '=', 's.id')
                     ->join('student_specialities as ss', 's.id', '=', 'ss.student_id')
+
                     ->join('specialities as sp', 'ss.speciality_id', '=', 'sp.id')
                     ->where('sp.id', '=', $specialty->id)
+                    ->where("ss.year_scholar_id", $new_inscription->year_id )
                     ->select(
                         'teams.id',
                         'member_1',
@@ -203,6 +206,7 @@ class PresentationController extends Controller
 
                         $testers_group = Presentation::
                             leftJoin('jury_members', 'presentations.testers_group_number', '=', 'jury_members.group_number')
+                            ->where('specialty_id', $specialty->id)
                             ->select(
                                 'teacher_id'
                             )->where('team_id', $team->id)->get();
@@ -286,6 +290,8 @@ class PresentationController extends Controller
                 ->where('specialty_id', $specialty_managed_id)
                 ->groupBy('group_number')
                 ->get();
+
+                
 
             $juryGroup_numbers_oc = $allJuryGroups->map(function ($juryGroup) {
                 return [

@@ -67,20 +67,19 @@ class sessionTeacherController extends Controller
 
     public function teacherUpdateInfo(teacherUpdateInfoRequest $request)
     {
-
-
-
         // $teacher_account  = Teacher_account_seeders::find($user ->id) ;
-        //
-
-
         $credentials = $request->validated();
 
         $teacher = Auth::guard('teacher')->user();
 
         $teacher_account = Teacher_account_seeders::find($teacher->id);
 
-        if ($teacher_account['logged'] == false) {
+        if ($teacher_account['logged'] == false  && !empty($credentials['personal_email'])  &&
+         !empty($credentials['tel']) &&
+          !empty($credentials['newPassword'])
+           ) {
+
+
 
             Teacher_account_seeders::where('id', $teacher->id)->update([
                 'logged' => true,

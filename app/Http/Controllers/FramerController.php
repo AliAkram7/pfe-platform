@@ -116,6 +116,7 @@ class FramerController extends Controller
 
         $specialty_managed_id = Teacher_specialty_manager::select('specialty_id')->where('teacher_id', $teacher->id)->get()->first()->specialty_id;
 
+
         $new_inscription = \DB::table('year_scholars')
             ->select('id AS year_id')
             ->orderByDesc('end_date')
@@ -123,16 +124,13 @@ class FramerController extends Controller
             ->get()->first();
 
 
+
         $teams = Team::select('teams.id')
-            ->where('year_scholar_id', $new_inscription->year_id)
+            ->where('teams.year_scholar_id', $new_inscription->year_id)
             ->join('student_specialities', 'student_specialities.student_id', '=', 'teams.member_1')
             ->where('speciality_id', $specialty_managed_id)
             ->orderBy('teams.id')
             ->get();
-
-
-
-
 
 
         foreach ($teams as $team) {
@@ -162,6 +160,26 @@ class FramerController extends Controller
         $specialty_id = Teacher_specialty_manager::select()->where('teacher_id', $teacher->id)->get()->first()->specialty_id;
 
         // !! students array of ids sorted using rank
+        $student_inscription =  \DB::table('year_scholars')
+        ->select('id AS year_id')
+        ->orderByDesc('end_date')
+        ->limit(1)
+        ->get()->first();
+
+            //  !! invalidate theme assignment for the last year
+            \DB::table('teams')
+            ->select()
+            ->leftJoin('students_account_seeders as s', 'teams.member_1', '=', 's.id')
+            ->leftJoin('student_specialities as ss', 's.id', '=', 'ss.student_id')
+            ->where('ss.speciality_id', '=', $specialty_id)
+            ->where('ss.year_scholar_id', $student_inscription->year_id)
+            ->leftJoin('specialities as sp', 'ss.speciality_id', '=', 'sp.id')
+            ->where('teams.year_scholar_id', $student_inscription->year_id)
+            ->update([
+                'supervisor_id' => null,
+                'theme_id' => null,
+                ]);  //  !! ---------------------------------------------------------------
+
 
         $sorted_list_of_students = Students_Account_Seeder::select('students_account_seeders.id', 'mgc')
             ->join('student_specialities', 'student_specialities.student_id', '=', 'students_account_seeders.id')
@@ -169,6 +187,9 @@ class FramerController extends Controller
             ->join('ranks', 'ranks.student_specialite_id', 'student_specialities.id')
             ->orderBy('mgc', 'desc')
             ->get()->toArray();
+
+
+
 
         // return $sorted_list_of_students ;
 
@@ -179,8 +200,6 @@ class FramerController extends Controller
 
         // !! framers array of available framer
         $list_framer = Framer::select('teacher_id', 'number_team_accepted')->where('specialty_id', $specialty_id)->get()->toArray();
-
-
 
         $list_framer_array = array_map(function ($obj) {
             return [
@@ -198,30 +217,36 @@ class FramerController extends Controller
         foreach ($sorted_list_of_students_array as $student) {
 
             // !! get List choice of student
-
-
             // return $student /;
 
-            $student_inscription = \DB::table('year_scholars AS ys')
-                ->join('student_specialities AS ss', 'ys.id', '=', 'ss.year_scholar_id')
-                ->select('ys.id AS year_id', 'ss.id', 'ss.speciality_id', 'ys.end_date')
-                ->where('ss.student_id', $student)
-                ->orderBy('ys.end_date', 'DESC')
-                ->limit(1)
-                ->get()
-                ->first();
+            // $student_inscription = \DB::table('year_scholars AS ys')
+            //     // ->join('student_specialities AS ss', 'ys.id', '=', 'ss.year_scholar_id')
+            //     ->select('ys.id AS year_id',  'ys.end_date')
+            //     // ->where('ss.student_id', $student)
+            //     ->orderBy('ys.end_date', 'DESC')
+            //     ->limit(1)
+            //     ->get()
+            //     ->first();
 
-            $team_info = Team::select('id', 'member_1', 'member_2', 'choice_list')
-                ->where('year_scholar_id', $student_inscription->year_id)
-                ->where(function ($query) use ($student) {
-                    $query->where('member_1', $student)
-                        ->orWhere('member_2', $student);
-                });
+
+            try {
+                $team_info = Team::select('id', 'member_1', 'member_2', 'choice_list')
+                    ->where('year_scholar_id', $student_inscription->year_id)
+                    ->where('member_1', $student)
+                    ->get()
+                    ->first();
+            } catch (\Throwable $th) {
+                    continue ;
+            }
+
+
 
             if (in_array($student, $student_black_list)) {
                 echo "student $student  in team  $team_info->id  blacklisted\n";
                 continue;
             }
+
+
 
             $choice_list = [];
             if ($team_info != null) {

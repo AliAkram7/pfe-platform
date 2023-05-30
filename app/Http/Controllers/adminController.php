@@ -221,8 +221,8 @@ class adminController extends Controller
                 ['account_status' => 0, 'logged' => 0]
             );
         $teacher = Teacher_account_seeders::select()->where('code', $cred['code'])->get()->first();
-        // $password = Str::random(10);
-        $password = 'password123E';
+        $password = Str::random(10);
+        // $password = 'password123E';
 
 
 

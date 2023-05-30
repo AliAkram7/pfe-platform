@@ -288,6 +288,7 @@ class TeamsController extends Controller
         if (
             Team::create([
                 'member_1' => $student_id,
+                "choice_list"=> "[]",
                 'year_scholar_id' => $student_inscription->year_id
             ])
         ) {

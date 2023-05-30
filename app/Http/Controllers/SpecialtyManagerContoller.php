@@ -74,27 +74,49 @@ class SpecialtyManagerContoller extends Controller
 
         $specialty_id = Teacher_specialty_manager::get()->where('teacher_id', $teacher->id)->first()->specialty_id;
 
-        $teams = \DB::table('teams')
-            ->leftJoin('students_account_seeders as s', function ($join) {
-                $join->on('teams.member_1', '=', 's.id')
-                    ->orOn('teams.member_2', '=', 's.id');
-            })
-            ->leftJoin('student_specialities as ss', 's.id', '=', 'ss.student_id')
-            ->leftJoin('year_scholars as ys', 'ys.id', '=', 'ss.year_scholar_id')
-            ->leftJoin('specialities as sp', 'ss.speciality_id', '=', 'sp.id')
-            ->select(
-                'teams.id',
-                'teams.year_scholar_id',
-                'member_1',
-                'member_2',
-                'supervisor_id',
-                'choice_list',
-                'theme_id',
-            )
-            ->where('teams.year_scholar_id', $selectedYearId)
-            ->where('sp.id', '=', $specialty_id)
-            ->distinct()
-            ->get()
+        $teams =
+        //  \DB::table('teams')
+        // ->select(
+        //     'teams.id',
+        //     'teams.year_scholar_id',
+        //     'member_1',
+        //     'member_2',
+        //     'supervisor_id',
+        //     'choice_list',
+        //     'theme_id',
+        // )
+        //     ->leftJoin('students_account_seeders as s', 'teams.member_1', '=', 's.id')
+        //     ->leftJoin('student_specialities as ss', 's.id', '=', 'ss.student_id')
+        //     ->leftJoin('year_scholars as ys', 'ys.id', '=', 'ss.year_scholar_id')
+        //     ->join('specialities as sp', 'ss.speciality_id', '=', 'sp.id')
+        //     ->where('ss.speciality_id', '=', $specialty_id)
+        //     ->where('teams.year_scholar_id', $selectedYearId)
+        //     ->distinct()
+        //     ->get()
+        \DB::table('teams')
+        ->select(
+            'teams.id',
+            // 'teams.year_scholar_id',
+            'member_1',
+            'member_2',
+            'supervisor_id',
+            'choice_list',
+            'theme_id',
+            // 'ss.student_id',
+            // 'ss.speciality_id',
+            // 'ss.year_scholar_id',
+        )
+        ->leftJoin('students_account_seeders as s', 'teams.member_1', '=', 's.id')
+        ->leftJoin('student_specialities as ss', 's.id', '=', 'ss.student_id')
+        ->where('ss.speciality_id', '=', $specialty_id)
+        ->where('ss.year_scholar_id', $selectedYearId)
+
+        // ->leftJoin('student_specialities as ss', 's', '=', 'ss.student_id')
+        // ->leftJoin('year_scholars as ys', 'ys.id', '=', 'ss.year_scholar_id')
+        ->leftJoin('specialities as sp', 'ss.speciality_id', '=', 'sp.id')
+        ->where('teams.year_scholar_id', $selectedYearId)
+        // ->distinct()
+        ->get();
 
         ;
 

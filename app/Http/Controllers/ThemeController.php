@@ -57,7 +57,7 @@ class ThemeController extends Controller
 
 
 
-        try {
+        // try {
             Theme::create(
                 [
                     'title' => $credentials['title'],
@@ -70,9 +70,9 @@ class ThemeController extends Controller
                     'specialty_id' => $specialty_id,
                 ]
             );
-        } catch (\Throwable $th) {
-            return response('send Error', 403);
-        }
+        // } catch (\Throwable $th) {
+        //     return response('send Error', 403);
+        // }
 
         return response('sended successfully', 201);
     }
@@ -297,27 +297,63 @@ class ThemeController extends Controller
 
     public function affectThemeToStudents(Request $request)
     {
-
+  
         // !! dependencies
         // !! specialty_id
 
         $teacher = $request->user('teacher');
         $specialty_id = Teacher_specialty_manager::select()->where('teacher_id', $teacher->id)->get()->first()->specialty_id;
+        $student_inscription =  \DB::table('year_scholars')
+        ->select('id AS year_id')
+        ->orderByDesc('end_date')
+        ->limit(1)
+        ->get()->first();
 
         // !! students array of ids sorted using rank
 
-        $sorted_list_of_students = Students_Account_Seeder::select('students_account_seeders.id', 'mgc')
+//         Team::where('student_specialities.speciality_id', $specialty_id)
+//                 ->where("year_scholar_id",2)->update(["theme_id"=>null, "supervisor_id"=>null]) ;
+// return  ;
+
+
+            // \DB::update('update teams set  theme_id = ?   where id = ?', [null]);
+            // \DB::update('update teams set  supervisor_id  = ?   where id = ?', [null, null]);
+
+
+            //  !! invalidate theme assignment for the last year
+            \DB::table('teams')
+            ->select()
+            ->leftJoin('students_account_seeders as s', 'teams.member_1', '=', 's.id')
+            ->leftJoin('student_specialities as ss', 's.id', '=', 'ss.student_id')
+            ->where('ss.speciality_id', '=', $specialty_id)
+            ->where('ss.year_scholar_id', $student_inscription->year_id)
+            ->leftJoin('specialities as sp', 'ss.speciality_id', '=', 'sp.id')
+            ->where('teams.year_scholar_id', $student_inscription->year_id)
+            ->update([
+                'supervisor_id' => null,
+                'theme_id' => null,
+                ]);  //  !! ---------------------------------------------------------------
+
+
+
+        $sorted_list_of_students = Students_Account_Seeder::
+            select('students_account_seeders.id', 'mgc', "students_account_seeders.name")
             ->join('student_specialities', 'student_specialities.student_id', '=', 'students_account_seeders.id')
-            ->where('student_specialities.speciality_id', $specialty_id)
             ->join('ranks', 'ranks.student_specialite_id', 'student_specialities.id')
+            ->where('student_specialities.speciality_id', $specialty_id)
+            ->where("student_specialities.year_scholar_id",$student_inscription->year_id)
             ->orderBy('mgc', 'desc')
             ->get()->toArray();
 
+
         // return $sorted_list_of_students ;
 
-        $sorted_list_of_students_array = array_map(function ($obj) {
+
+         $sorted_list_of_students_array = array_map(function ($obj) {
             return $obj["id"];
         }, $sorted_list_of_students);
+
+
 
 
         // !! themes array of available theme
@@ -337,26 +373,47 @@ class ThemeController extends Controller
 
             // return $student /;
 
-            $student_inscription = \DB::table('year_scholars AS ys')
-                ->join('student_specialities AS ss', 'ys.id', '=', 'ss.year_scholar_id')
-                ->select('ys.id AS year_id', 'ss.id', 'ss.speciality_id', 'ys.end_date')
-                ->where('ss.student_id', $student)
-                ->orderBy('ys.end_date', 'DESC')
-                ->limit(1)
-                ->get()
-                ->first();
+         try {
+             $team_info = Team::select('id', 'member_1', 'member_2', 'choice_list','year_scholar_id')
+                 ->where('year_scholar_id', $student_inscription->year_id)
+                 // ->where(function ($query) use ($student) {
+                 //     $query
+                     ->where('member_1', $student)
+                      ->orWhere('member_2', $student)
+                 // })
+                 ->get()->first();
+            //code...
+            echo " team -> id " . $team_info->id ;
 
-            $team_info = Team::select('id', 'member_1', 'member_2', 'choice_list')
+            echo "\n\nstudent founded   $student\n\n" ;
 
-                ->where('year_scholar_id', $student_inscription->year_id)
-                ->where(function ($query) use ($student) {
-                    $query->where('member_1', $student)
-                        ->orWhere('member_2', $student);
-                })
-                ->get()->first();
+         } catch (\Throwable $th) {
+            echo "\n\nstudent not founded   $student\n\n" ;
+         }
+
+
+//             $query = "SELECT id, member_1, member_2, choice_list, year_scholar_id FROM teams WHERE year_scholar_id = :year_id AND (member_1 = :student OR member_2 = :student) LIMIT 1";
+
+//     $bindings = [
+//     'year_id' => $student_inscription->year_id,
+//     'student' => $student,
+// ];
+
+
+
+// $team_info = \DB::selectOne($query, $bindings);
+
+
 
             if (in_array($student, $student_black_list)) {
-                echo "student $student  in team  $team_info->id  blacklisted\n";
+                // echo "student $student  in team  $team_info->id  blacklisted\n";
+                echo "----------------------------\n" ;
+                    echo $sorted_list_of_students = Students_Account_Seeder::
+                        select("students_account_seeders.name")
+                        ->where('students_account_seeders.id', $student)
+                        ->get()." in blacklist\n " ;
+                echo "----------------------------\n" ;
+
                 continue;
             }
 
@@ -380,7 +437,15 @@ class ThemeController extends Controller
 
 
                     if (in_array($theme, $theme_black_list)) {
-                        echo "theme $theme blacklisted \n ";
+                        // echo "theme $theme blacklisted \n ";
+
+                        echo "----------------------------\n" ;
+                        echo $sorted_list_of_students = Theme::
+                            select("title")
+                            ->where('id', $theme)
+                            ->get() . " theme blacklist\n";
+                        echo "----------------------------\n" ;
+
                         continue;
                     }
 
@@ -414,7 +479,15 @@ class ThemeController extends Controller
 
 
 
-                                echo "$team_info->id inserted $theme\n  ";
+                                // echo "$team_info->id inserted $theme\n  ";
+                                echo "----------------------------\n" ;
+                                echo Theme::
+                                    select("title")
+                                    ->where('id', $theme)
+                                    ->get() ." team $team_info->id  is inserted to this team $theme  \n"  ;
+                                echo "----------------------------\n"  ;
+
+
 
                                 if ($team_info->member_1 != null) {
                                     $student_black_list[] = $team_info->member_1;

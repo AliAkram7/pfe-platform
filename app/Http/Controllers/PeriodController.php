@@ -107,7 +107,6 @@ class PeriodController extends Controller
 
         return Team_appointment::select()->where('id', $credentials['appointment_id'])->get()->first();
 
-
     }
 
 

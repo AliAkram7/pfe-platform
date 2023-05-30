@@ -62,7 +62,7 @@
             <p><span class="credential-label">Code:</span> <span class="credential-value">{{ $teacherCode }}</span></p>
             <p><span class="credential-label">Password:</span> <span class="credential-value">{{ $teacherPassword }}</span></p>
         </div>
-        {{-- <p>If you have any trouble logging in, please contact us at <a href="mailto:info@example.com">info@example.com</a>.</p> --}}
+        <p>If you have any trouble logging in, please contact us at <a href="soulimanali2323@gmail.com">admin@univ-mascara.com</a>.</p>
         <p class="signature">Best regards,<br>{{ config('app.name') }}</p>
     </div>
 </body>

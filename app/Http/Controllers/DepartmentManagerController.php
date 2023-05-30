@@ -100,21 +100,28 @@ class DepartmentManagerController extends Controller
         $worksheet = $spreadsheet->getActiveSheet();
 
         $highestRow = $worksheet->getHighestRow();
-
+        $i = 0 ;
         for ($row = 2; $row <= $highestRow; $row++) {
 
-            $student = Students_Account_Seeder::select()->where('code', $worksheet->getCell('A' . $row)->getValue())->get()->first();
+            $student = Students_Account_Seeder::select()->where('code', $worksheet->getCell('B' . $row)->getValue())->get()->first();
 
             if ($student == null) {
-                if (
+
+
+                try {
                     $user = Students_Account_Seeder::create(
                         [
-                            'code' => $worksheet->getCell('A' . $row)->getValue(),
-                            'name' => $worksheet->getCell('B' . $row)->getValue(),
+                            'code' => $worksheet->getCell('B' . $row)->getValue(),
+                            'name' => $worksheet->getCell('A' . $row)->getValue(),
                             'default_password' => Str::random(10),
                         ]
-                    )
-                ) {
+                    ) ;
+                } catch (\Throwable $th) {
+                    $i++;
+                    continue ;
+                }
+
+                if ($user) {
 
                     try {
                         Student_speciality::create(
@@ -124,22 +131,36 @@ class DepartmentManagerController extends Controller
                                 'year_scholar_id' => $cred['yearId']
                             ]
                         );
+
                     } catch (\Throwable $th) {
+                        $i++;
                         continue;
                     }
 
 
                 }
             } else {
-                Student_speciality::create(
-                    [
-                        'student_id' => $student->id,
-                        'speciality_id' => $cred['specialty_id'],
-                        'year_scholar_id' => $cred['yearId']
-                    ]
-                );
+                try {
+                    Student_speciality::create(
+                        [
+                            'student_id' => $student->id,
+                            'speciality_id' => $cred['specialty_id'],
+                            'year_scholar_id' => $cred['yearId']
+                        ]
+                    );
+
+                } catch (\Throwable $th) {
+                    $i++;
+                    continue  ;
+                }
             }
         }
+        if($i > 0 ){
+            return response('',202) ;
+        }else{
+            return response('',201) ;
+        }
+
     }
 
     public function addStudent(addStudentRequest $request)
@@ -180,6 +201,8 @@ class DepartmentManagerController extends Controller
                     'year_scholar_id' => $cred['yearId']
                 ]
             );
+            return response('', 201);
+
         }
 
         return response('', 403);
@@ -207,7 +230,9 @@ class DepartmentManagerController extends Controller
             update(['account_status' => 1]);
         return response('account unlocked', 201);
     }
+
     // ! delete account
+
     public function deleteAccount(udStudentRequest $request)
     {
         $cred = $request->validated();
@@ -218,42 +243,42 @@ class DepartmentManagerController extends Controller
         return response('account deleted', 201);
     }
 
-    public function deleteInscription(udStudentRequest $request){
+    public function deleteInscription(udStudentRequest $request)
+    {
         $cred = $request->validated();
 
         $student = Students_Account_Seeder::where('code', $cred['code'])->get()->first();
 
-        // try {
+        try {
 
             Student_speciality::where('student_id', $student->id)->where('year_scholar_id', $cred['yearId'])->delete();
-
-
             return response('account deleted', 201);
-        // } catch (\Throwable $th) {
+
+        } catch (\Throwable $th) {
 
             return response('Error : account not deleted for some reason', 403);
-        // }
-
-
+        }
 
     }
 
     // ! reset account
     public function resetStudentAccount(udStudentRequest $request)
     {
+
         $cred = $request->validated();
         Student::where('code', $cred['code'])->delete();
         Students_Account_Seeder::
             where('code', $cred['code'])->
             update(['account_status' => 0, 'logged' => 0]);
-        return response('account deleted', 201);
+        return response('account rested', 201);
+
     }
 
 
     // ! update account
 
-    public function updateAccount(udStudentRequest $request)
-    {
+    public function updateAccount(udStudentRequest $request){
+
         $cred = $request->validated();
 
         if (!empty($cred['name'])) {
@@ -264,9 +289,8 @@ class DepartmentManagerController extends Controller
                 where('code', $cred['code'])->
                 update(['name' => $cred['name']]);
 
-
-
         }
+
         if (!empty($cred['updated_code'])) {
             Students_Account_Seeder::
                 where('code', $cred['code'])->

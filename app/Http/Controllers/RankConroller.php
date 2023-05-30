@@ -85,6 +85,9 @@ class RankConroller extends Controller
 
         $file = $request->file('file');
 
+
+
+
         $spreadsheet = IOFactory::load($file->getPathname());
 
         $worksheet = $spreadsheet->getActiveSheet();
@@ -104,10 +107,12 @@ class RankConroller extends Controller
                     ->get()->first()
             ) {
 
+
                 $rank = Rank::select()->where('student_specialite_id', $student_speciality_id->id)->get()->first();
 
+
                 if ($rank == null) {
-                    try {
+                    // try {
                         Rank::create([
                             'student_specialite_id' => $student_speciality_id->id,
                             'ms1' => $worksheet->getCell('B' . $row)->getValue(),
@@ -115,9 +120,9 @@ class RankConroller extends Controller
                             'mgc' => $worksheet->getCell('D' . $row)->getValue(),
                             'observation' => $worksheet->getCell('E' . $row)->getValue(),
                         ]);
-                    } catch (\Throwable $th) {
-                        continue;
-                    }
+                    // } catch (\Throwable $th) {
+                    //     continue;
+                    // }
                 }
             }
 

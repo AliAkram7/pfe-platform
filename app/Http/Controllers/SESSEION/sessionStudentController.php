@@ -56,12 +56,7 @@ class sessionStudentController extends Controller
                     'email' => $credentials['email'],
                     'tel' => $credentials['tel'],
                 ]);
-
-
                 // $student->notify(new EmailVerificationNotification);
-
-
-
                 \DB::update('update students_account_seeders set logged = true where code = ?', [$student->code]);
 
                 return response('updated successfully', 201);
@@ -402,6 +397,7 @@ class sessionStudentController extends Controller
                 $team = Team::create([
                     'member_1' => $sender_id,
                     'member_2' => $receiver_id,
+                    "choice_list"=> "[]",
                     'year_scholar_id' => $receiver_inscription->year_id
                 ])
             ) {
